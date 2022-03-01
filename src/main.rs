@@ -120,71 +120,38 @@ fn collision_system(
     let user_line = user_lines.single();
 
     for (line, mut color) in lines.iter_mut() {
-        let intersection = lineline(
-            user_line.p0.x,
-            user_line.p0.y,
-            user_line.p1.x,
-            user_line.p1.y,
-            line.p0.x,
-            line.p0.y,
-            line.p1.x,
-            line.p1.y,
-        );
-
-        color.color = match intersection {
+        color.color = match collide_line_line(user_line, line) {
             Some(_) => Color::RED,
             None => Color::WHITE,
         };
     }
 }
 
-fn lineline(
-    x1: f32,
-    y1: f32,
-    x2: f32,
-    y2: f32,
-    x3: f32,
-    y3: f32,
-    x4: f32,
-    y4: f32,
-) -> Option<Vec2> {
-    // calculate the distance to intersection point
-    let uA = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3))
-        / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
-    let uB = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3))
-        / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+fn collide_line_line(user_line: &Line2d, line: &Line2d) -> Option<Vec2> {
+    let x1 = user_line.p0.x;
+    let y1 = user_line.p0.y;
+    let x2 = user_line.p1.x;
+    let y2 = user_line.p1.y;
+    let x3 = line.p0.x;
+    let y3 = line.p0.y;
+    let x4 = line.p1.x;
+    let y4 = line.p1.y;
 
-    // if uA and uB are between 0-1, lines are colliding
-    if uA >= 0.0 && uA <= 1.0 && uB >= 0.0 && uB <= 1.0 {
-        let intersection = Vec2::new(x1 + (uA * (x2 - x1)), y1 + (uA * (y2 - y1)));
-        eprintln!("intersection point {}", intersection);
+    // calculate the distance to intersection point
+    let a_num = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3);
+    let a_den = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+    let a_u = a_num / a_den;
+
+    let b_num = (x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3);
+    let b_den = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+    let b_u = b_num / b_den;
+
+    // if u_a and uB are between 0-1, lines are colliding
+    if a_u >= 0.0 && a_u <= 1.0 && b_u >= 0.0 && b_u <= 1.0 {
+        let intersection = Vec2::new(x1 + (a_u * (x2 - x1)), y1 + (a_u * (y2 - y1)));
+        // eprintln!("intersection point {}", intersection);
         Some(intersection)
     } else {
         None
     }
 }
-
-// #[derive(Component)]
-// struct Line {
-//     p0: Vec2,
-//     p1: Vec2,
-// }
-
-// struct Collider {
-//     width: f32,
-//     height: f32,
-// }
-
-// impl Collider {
-//     fn collides(pos_a: Vec2, size_a: &Collider, pos_b: Vec2, size_b: &Collider) -> bool {
-//         if pos_a.x < pos_b.x + size_b.width
-//             && pos_a.x + size_a.width > pos_b.x
-//             && pos_a.y < pos_b.y + size_b.height
-//             && pos_a.y + size_a.height > pos_b.y
-//         {
-//             true
-//         } else {
-//             false
-//         }
-//     }
-// }
