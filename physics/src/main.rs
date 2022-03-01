@@ -127,28 +127,29 @@ fn collision_system(
     }
 }
 
-fn collide_line_line(user_line: &Line2d, line: &Line2d) -> Option<Vec2> {
-    let x1 = user_line.p0.x;
-    let y1 = user_line.p0.y;
-    let x2 = user_line.p1.x;
-    let y2 = user_line.p1.y;
-    let x3 = line.p0.x;
-    let y3 = line.p0.y;
-    let x4 = line.p1.x;
-    let y4 = line.p1.y;
+fn collide_line_line(line_a: &Line2d, line_b: &Line2d) -> Option<Vec2> {
+    let x1 = line_a.p0.x;
+    let y1 = line_a.p0.y;
+    let x2 = line_a.p1.x;
+    let y2 = line_a.p1.y;
+
+    let x3 = line_b.p0.x;
+    let y3 = line_b.p0.y;
+    let x4 = line_b.p1.x;
+    let y4 = line_b.p1.y;
 
     // calculate the distance to intersection point
-    let a_num = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3);
-    let a_den = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-    let a_u = a_num / a_den;
+    let num_a = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3);
+    let den_a = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+    let u_a = num_a / den_a;
 
-    let b_num = (x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3);
-    let b_den = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
-    let b_u = b_num / b_den;
+    let num_b = (x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3);
+    let den_b = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
+    let u_b = num_b / den_b;
 
-    // if u_a and uB are between 0-1, lines are colliding
-    if a_u >= 0.0 && a_u <= 1.0 && b_u >= 0.0 && b_u <= 1.0 {
-        let intersection = Vec2::new(x1 + (a_u * (x2 - x1)), y1 + (a_u * (y2 - y1)));
+    // if u_a and uB are between 0.0 and 1.0, lines are colliding
+    if u_a >= 0.0 && u_a <= 1.0 && u_b >= 0.0 && u_b <= 1.0 {
+        let intersection = Vec2::new(x1 + (u_a * (x2 - x1)), y1 + (u_a * (y2 - y1)));
         // eprintln!("intersection point {}", intersection);
         Some(intersection)
     } else {
