@@ -1,28 +1,50 @@
 use super::geometry::*;
 
-/// Calculates the intersection point for 2 lines
-pub fn collide_line_quad(line: &Line2d, quad: &Quad2d) -> bool {
-    let top = collide_line_line(
-        line,
+#[derive(Debug)]
+pub enum Collision {
+    Top(Point2d),
+    Bottom(Point2d),
+    Left(Point2d),
+    Right(Point2d),
+}
+
+/// Calculates intersection points for a quad and line
+pub fn collide_quad_line(quad: &Quad2d, line: &Line2d) -> Vec<Collision> {
+    let mut collisions = Vec::new();
+
+    match collide_line_line(
         &Line2d::from_points(quad.top_left(), quad.top_right()),
-    );
-
-    let bottom = collide_line_line(
         line,
+    ) {
+        Some(point) => collisions.push(Collision::Top(point)),
+        None => {}
+    }
+
+    match collide_line_line(
         &Line2d::from_points(quad.bottom_left(), quad.bottom_right()),
-    );
-
-    let left = collide_line_line(
         line,
+    ) {
+        Some(point) => collisions.push(Collision::Bottom(point)),
+        None => {}
+    }
+
+    match collide_line_line(
         &Line2d::from_points(quad.top_left(), quad.bottom_left()),
-    );
-
-    let right = collide_line_line(
         line,
-        &Line2d::from_points(quad.top_right(), quad.bottom_right()),
-    );
+    ) {
+        Some(point) => collisions.push(Collision::Left(point)),
+        None => {}
+    }
 
-    top.is_some() || bottom.is_some() || left.is_some() || right.is_some()
+    match collide_line_line(
+        &Line2d::from_points(quad.top_right(), quad.bottom_right()),
+        line,
+    ) {
+        Some(point) => collisions.push(Collision::Right(point)),
+        None => {}
+    }
+
+    collisions
 }
 
 /// Calculates the intersection point for 2 lines

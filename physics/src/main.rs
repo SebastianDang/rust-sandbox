@@ -70,14 +70,15 @@ fn collision_system(
     let user_line = user_lines.single();
 
     for quad in quads.iter_mut() {
-        if collide_line_quad(user_line, quad) {
-            eprintln!("line quad");
-        }
+        let collisions = collide_quad_line(quad, user_line);
+        dbg!(collisions);
     }
 
     for line in lines.iter_mut() {
-        match collide_line_line(user_line, line) {
-            Some(point) => eprintln!("line line {} {}", point.x, point.y),
+        match collide_line_line(line, user_line) {
+            Some(point) => {
+                dbg!(point);
+            }
             None => {}
         }
     }
