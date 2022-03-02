@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Debug, Component)]
+#[derive(Debug, Clone, Component)]
 pub struct Point2d {
     pub x: f32,
     pub y: f32,
@@ -29,7 +29,7 @@ impl From<Vec2> for Point2d {
     }
 }
 
-#[derive(Debug, Component)]
+#[derive(Debug, Clone, Component)]
 pub struct Line2d {
     pub p0: Point2d,
     pub p1: Point2d,
@@ -48,7 +48,7 @@ impl Line2d {
     }
 }
 
-#[derive(Debug, Component)]
+#[derive(Debug, Clone, Component)]
 pub struct Quad2d {
     pub position: Point2d,
     pub width: f32,
@@ -90,5 +90,9 @@ impl Quad2d {
             self.position.x + (self.width / 2.0),
             self.position.y - (self.height / 2.0),
         )
+    }
+
+    pub fn bottom_middle(&self) -> Point2d {
+        Point2d::new(self.position.x, self.position.y - (self.height / 2.0))
     }
 }
