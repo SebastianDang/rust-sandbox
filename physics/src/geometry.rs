@@ -11,7 +11,7 @@ impl Point2d {
         Self { x, y }
     }
 
-    pub fn _as_vec2(&self) -> Vec2 {
+    pub fn as_vec2(&self) -> Vec2 {
         Vec2::new(self.x, self.y)
     }
 
@@ -71,17 +71,17 @@ impl Quad2d {
         )
     }
 
-    pub fn top_right(&self) -> Point2d {
-        Point2d::new(
-            self.position.x + (self.width / 2.0),
-            self.position.y + (self.height / 2.0),
-        )
-    }
-
     pub fn bottom_left(&self) -> Point2d {
         Point2d::new(
             self.position.x - (self.width / 2.0),
             self.position.y - (self.height / 2.0),
+        )
+    }
+
+    pub fn top_right(&self) -> Point2d {
+        Point2d::new(
+            self.position.x + (self.width / 2.0),
+            self.position.y + (self.height / 2.0),
         )
     }
 
@@ -92,7 +92,19 @@ impl Quad2d {
         )
     }
 
-    pub fn bottom_middle(&self) -> Point2d {
+    pub fn mid_top(&self) -> Point2d {
+        Point2d::new(self.position.x, self.position.y + (self.height / 2.0))
+    }
+
+    pub fn mid_bottom(&self) -> Point2d {
         Point2d::new(self.position.x, self.position.y - (self.height / 2.0))
+    }
+
+    pub fn mid_left(&self) -> Point2d {
+        Point2d::new(self.position.x - (self.width / 2.0), self.position.y)
+    }
+
+    pub fn mid_right(&self) -> Point2d {
+        Point2d::new(self.position.x + (self.width / 2.0), self.position.y)
     }
 }

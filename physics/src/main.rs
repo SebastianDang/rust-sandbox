@@ -26,7 +26,7 @@ fn main() {
 
 fn setup(mut commands: Commands) {
     let points: [Point2d; 4] = [
-        Point2d { x: 0.0, y: 0.0 },
+        Point2d { x: -500.0, y: 0.0 },
         Point2d { x: 50.0, y: 0.0 },
         Point2d { x: 100.0, y: 50.0 },
         Point2d { x: 150.0, y: 50.0 },
@@ -41,6 +41,21 @@ fn setup(mut commands: Commands) {
             ))
             .insert(RenderColor::default());
     }
+
+    commands
+        .spawn()
+        .insert(Line2d::new(-500.0, 0.0, -500.0, 500.0))
+        .insert(RenderColor::default());
+
+    commands
+        .spawn()
+        .insert(Line2d::new(150.0, 50.0, 150.0, 500.0))
+        .insert(RenderColor::default());
+
+    commands
+        .spawn()
+        .insert(Line2d::new(-500.0, 500.0, 150.0, 500.0))
+        .insert(RenderColor::default());
 
     commands
         .spawn()
@@ -67,6 +82,13 @@ fn player_movement_system(
     if keyboard_input.pressed(KeyCode::Right) {
         player.position.x += 1.0;
     }
+
+    if keyboard_input.pressed(KeyCode::Down) {
+        player.position.y -= 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::Up) {
+        player.position.y += 1.0;
+    }
 }
 
 fn player_collision_system(
@@ -79,15 +101,15 @@ fn player_collision_system(
     let mut player = player.single_mut();
 
     for line in lines.iter_mut() {
-        let collisions = collide_quad_line(&player, line);
-        // dbg!(&collisions);
-        for collision in collisions {
+        for collision in collide_quad_line(&player, line) {
             match collision {
-                Collision::Top(_) => {}
-                Collision::Bottom(point) => {
-                    if player.bottom_middle().y < point.y {
-                        player.position.y = point.y + (player.height / 2.) + 1.0;
-                    }
+                Collision::Top(point) | Collision::Bottom(point) => {
+                    // if player.mid_left().x < point.x {
+                    //     player.position.x = point.x + (player.width / 2.) + 1.0;
+                    // }
+                    // if player.mid_right().x > point.x {
+                    //     player.position.x = point.x - (player.width / 2.) - 1.0;
+                    // }
                 }
                 Collision::Left(point) => {
                     if player.bottom_left().y < point.y {
