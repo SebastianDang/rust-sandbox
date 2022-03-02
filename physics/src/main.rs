@@ -28,13 +28,18 @@ fn setup(mut commands: Commands) {
     commands
         .spawn()
         .insert(User)
-        .insert(Line2d::new(0.0, 0.0, 0.0, 0.0));
+        .insert(Line2d::new(0.0, 0.0, 0.0, 0.0))
+        .insert(RenderColor::default());
 
     commands
         .spawn()
-        .insert(Line2d::new(200.0, 200.0, 400.0, -200.0));
+        .insert(Line2d::new(200.0, 200.0, 400.0, -200.0))
+        .insert(RenderColor::default());
 
-    commands.spawn().insert(Quad2d::new(0.0, 0.0, 100.0, 100.0));
+    commands
+        .spawn()
+        .insert(Quad2d::new(-200.0, 0.0, 100.0, 100.0))
+        .insert(RenderColor::default());
 }
 
 #[derive(Component)]
@@ -65,10 +70,15 @@ fn collision_system(
     let user_line = user_lines.single();
 
     for quad in quads.iter_mut() {
-        let collision = collide_line_quad(user_line, quad);
+        if collide_line_quad(user_line, quad) {
+            eprintln!("line quad");
+        }
     }
 
     for line in lines.iter_mut() {
-        let collision = collide_line_line(user_line, line);
+        match collide_line_line(user_line, line) {
+            Some(point) => eprintln!("line line {} {}", point.x, point.y),
+            None => {}
+        }
     }
 }
