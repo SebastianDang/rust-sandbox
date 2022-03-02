@@ -11,7 +11,7 @@ impl Point2d {
         Self { x, y }
     }
 
-    pub fn as_vec2(&self) -> Vec2 {
+    pub fn _as_vec2(&self) -> Vec2 {
         Vec2::new(self.x, self.y)
     }
 

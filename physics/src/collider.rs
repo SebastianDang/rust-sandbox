@@ -4,32 +4,32 @@ use super::geometry::*;
 
 /// Calculates the intersection point for 2 lines
 pub fn collide_line_quad(line: &Line2d, quad: &Quad2d) -> bool {
-    let top = collide_lines(
+    let top = collide_line_line(
         line,
         &Line2d::from_points(quad.top_left(), quad.top_right()),
     );
 
-    let left = collide_lines(
+    let bottom = collide_line_line(
+        line,
+        &Line2d::from_points(quad.bottom_left(), quad.bottom_right()),
+    );
+
+    let left = collide_line_line(
         line,
         &Line2d::from_points(quad.top_left(), quad.bottom_left()),
     );
 
-    let right = collide_lines(
+    let right = collide_line_line(
         line,
-        &Line2d::from_points(quad.bottom_right(), quad.top_right()),
+        &Line2d::from_points(quad.top_right(), quad.bottom_right()),
     );
 
-    let bottom = collide_lines(
-        line,
-        &Line2d::from_points(quad.bottom_right(), quad.bottom_left()),
-    );
-
-    top.is_some() || left.is_some() || right.is_some() || bottom.is_some()
+    top.is_some() || bottom.is_some() || left.is_some() || right.is_some()
 }
 
 /// Calculates the intersection point for 2 lines
-pub fn collide_lines(line_a: &Line2d, line_b: &Line2d) -> Option<Vec2> {
-    collide_line_points(
+pub fn collide_line_line(line_a: &Line2d, line_b: &Line2d) -> Option<Vec2> {
+    collide_segment_segment(
         line_a.p0.x,
         line_a.p0.y,
         line_a.p1.x,
@@ -47,7 +47,7 @@ pub fn collide_lines(line_a: &Line2d, line_b: &Line2d) -> Option<Vec2> {
 ///   Line B: (x3, y3) to (x4, y4)
 /// Output:
 ///   Point: (x, y)
-pub fn collide_line_points(
+pub fn collide_segment_segment(
     x1: f32,
     y1: f32,
     x2: f32,
@@ -68,9 +68,9 @@ pub fn collide_line_points(
 
     // if u_a and u_b are between 0.0 and 1.0, lines are colliding
     if u_a >= 0.0 && u_a <= 1.0 && u_b >= 0.0 && u_b <= 1.0 {
-        let intersection = Vec2::new(x1 + (u_a * (x2 - x1)), y1 + (u_a * (y2 - y1)));
-        // eprintln!("intersection point {}", intersection);
-        Some(intersection)
+        let x = x1 + (u_a * (x2 - x1));
+        let y = y1 + (u_a * (y2 - y1));
+        Some(Vec2::new(x, y))
     } else {
         None
     }
