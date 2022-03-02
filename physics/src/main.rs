@@ -81,6 +81,10 @@ impl Line2d {
             p1: Point2d::new(x2, y2),
         }
     }
+
+    fn from_points(p0: Point2d, p1: Point2d) -> Self {
+        Self { p0, p1 }
+    }
 }
 
 #[derive(Debug, Component)]
@@ -165,9 +169,9 @@ fn render_lines_system(
 
 fn render_quad_system(
     mut debug_lines: ResMut<DebugLines>,
-    lines: Query<(&Quad2d, &ColorComponent)>,
+    quads: Query<(&Quad2d, &ColorComponent)>,
 ) {
-    for (quad, color) in lines.iter() {
+    for (quad, color) in quads.iter() {
         let top_left = quad.top_left().as_vec3();
         let top_right = quad.top_right().as_vec3();
         let bottom_left = quad.bottom_left().as_vec3();
@@ -182,7 +186,8 @@ fn render_quad_system(
 
 fn collision_system(
     user_lines: Query<&Line2d, With<User>>,
-    mut lines: Query<(&Line2d, &mut ColorComponent), Without<User>>,
+    mut quads: Query<(&Quad2d, &mut ColorComponent), Without<User>>,
+    // mut lines: Query<(&Line2d, &mut ColorComponent), Without<User>>,
 ) {
     // check if line exists
     if user_lines.is_empty() {
@@ -190,12 +195,45 @@ fn collision_system(
     }
     let user_line = user_lines.single();
 
-    for (line, mut color) in lines.iter_mut() {
-        color.color = match collide_lines(user_line, line) {
-            Some(_) => Color::RED,
-            None => Color::WHITE,
+    for (quad, mut color) in quads.iter_mut() {
+        color.color = if collide_line_quad(user_line, quad) {
+            Color::RED
+        } else {
+            Color::WHITE
         };
     }
+
+    // for (line, mut color) in lines.iter_mut() {
+    //     color.color = match collide_lines(user_line, line) {
+    //         Some(_) => Color::RED,
+    //         None => Color::WHITE,
+    //     };
+    // }
+}
+
+/// Calculates the intersection point for 2 lines
+fn collide_line_quad(line: &Line2d, quad: &Quad2d) -> bool {
+    let top = collide_lines(
+        line,
+        &Line2d::from_points(quad.top_left(), quad.top_right()),
+    );
+
+    let left = collide_lines(
+        line,
+        &Line2d::from_points(quad.top_left(), quad.bottom_left()),
+    );
+
+    let right = collide_lines(
+        line,
+        &Line2d::from_points(quad.bottom_right(), quad.top_right()),
+    );
+
+    let bottom = collide_lines(
+        line,
+        &Line2d::from_points(quad.bottom_right(), quad.bottom_left()),
+    );
+
+    top.is_some() || left.is_some() || right.is_some() || bottom.is_some()
 }
 
 /// Calculates the intersection point for 2 lines
