@@ -1,5 +1,3 @@
-use bevy::prelude::*;
-
 use super::geometry::*;
 
 /// Calculates the intersection point for 2 lines
@@ -28,7 +26,7 @@ pub fn collide_line_quad(line: &Line2d, quad: &Quad2d) -> bool {
 }
 
 /// Calculates the intersection point for 2 lines
-pub fn collide_line_line(line_a: &Line2d, line_b: &Line2d) -> Option<Vec2> {
+pub fn collide_line_line(line_a: &Line2d, line_b: &Line2d) -> Option<Point2d> {
     collide_segment_segment(
         line_a.p0.x,
         line_a.p0.y,
@@ -56,7 +54,7 @@ pub fn collide_segment_segment(
     y3: f32,
     x4: f32,
     y4: f32,
-) -> Option<Vec2> {
+) -> Option<Point2d> {
     // calculate the distance to intersection point
     let num_a = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3);
     let den_a = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
@@ -70,7 +68,7 @@ pub fn collide_segment_segment(
     if u_a >= 0.0 && u_a <= 1.0 && u_b >= 0.0 && u_b <= 1.0 {
         let x = x1 + (u_a * (x2 - x1));
         let y = y1 + (u_a * (y2 - y1));
-        Some(Vec2::new(x, y))
+        Some(Point2d::new(x, y))
     } else {
         None
     }
