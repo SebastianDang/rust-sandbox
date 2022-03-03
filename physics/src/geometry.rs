@@ -1,3 +1,5 @@
+use std::ops::{Add, AddAssign};
+
 use bevy::prelude::*;
 
 #[derive(Debug, Clone, Component)]
@@ -26,6 +28,26 @@ impl From<Vec2> for Point2d {
             x: item.x,
             y: item.y,
         }
+    }
+}
+
+impl Add for Point2d {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+impl AddAssign for Point2d {
+    fn add_assign(&mut self, other: Self) {
+        *self = Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        };
     }
 }
 

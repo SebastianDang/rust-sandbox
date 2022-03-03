@@ -1,47 +1,45 @@
+use std::collections::HashMap;
+
 use super::geometry::*;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Collision {
-    Top(Point2d),
-    Bottom(Point2d),
-    Left(Point2d),
-    Right(Point2d),
+    Top,
+    Bottom,
+    Left,
+    Right,
 }
 
 /// Calculates intersection points for a quad and line
-pub fn collide_quad_line(quad: &Quad2d, line: &Line2d) -> Vec<Collision> {
-    let mut collisions = Vec::new();
+pub fn collide_quad_line(quad: &Quad2d, line: &Line2d) -> HashMap<Collision, Point2d> {
+    let mut collisions = HashMap::new();
 
-    match collide_line_line(
+    if let Some(point) = collide_line_line(
         &Line2d::from_points(quad.top_left(), quad.top_right()),
         line,
     ) {
-        Some(point) => collisions.push(Collision::Top(point)),
-        None => {}
+        collisions.insert(Collision::Top, point);
     }
 
-    match collide_line_line(
+    if let Some(point) = collide_line_line(
         &Line2d::from_points(quad.bottom_left(), quad.bottom_right()),
         line,
     ) {
-        Some(point) => collisions.push(Collision::Bottom(point)),
-        None => {}
+        collisions.insert(Collision::Bottom, point);
     }
 
-    match collide_line_line(
+    if let Some(point) = collide_line_line(
         &Line2d::from_points(quad.top_left(), quad.bottom_left()),
         line,
     ) {
-        Some(point) => collisions.push(Collision::Left(point)),
-        None => {}
+        collisions.insert(Collision::Left, point);
     }
 
-    match collide_line_line(
+    if let Some(point) = collide_line_line(
         &Line2d::from_points(quad.top_right(), quad.bottom_right()),
         line,
     ) {
-        Some(point) => collisions.push(Collision::Right(point)),
-        None => {}
+        collisions.insert(Collision::Right, point);
     }
 
     collisions

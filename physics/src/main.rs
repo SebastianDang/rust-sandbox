@@ -20,7 +20,7 @@ fn main() {
         .add_startup_system(setup)
         .add_startup_system(new_main_camera)
         .add_system(player_movement_system)
-        .add_system(player_collision_system)
+        .add_system(player_physics_system)
         .run();
 }
 
@@ -60,110 +60,98 @@ fn setup(mut commands: Commands) {
     commands
         .spawn()
         .insert(Player)
-        .insert(Quad2d::new(0.0, 20.0, 20.0, 40.0))
-        .insert(RenderColor::default());
+        .insert(Quad2d::new(0.0, 100.0, 20.0, 40.0))
+        .insert(RenderColor::default())
+        .insert(RigidBody::default());
 }
 
 #[derive(Component)]
 pub struct Player;
 
+const MOVEMENT_SPEED: f32 = 1.0;
+const MAX_MOVEMENT_SPEED: f32 = 2.0;
+const MAX_FALL_SPEED: f32 = -4.0;
+const MAX_JUMP_SPEED: f32 = 4.0;
+const JUMP_FORCE: f32 = 4.0;
+const GRAVITY: f32 = -1.0;
+
+#[derive(Component, Default)]
+struct RigidBody {
+    velocity: Vec2,
+    acceleration: Vec2,
+}
+
 fn player_movement_system(
     keyboard_input: Res<Input<KeyCode>>,
-    mut player: Query<&mut Quad2d, With<Player>>,
+    mut player: Query<&mut RigidBody, With<Player>>,
 ) {
     if player.is_empty() {
         return;
     }
-    let mut player = player.single_mut();
+    let mut body = player.single_mut();
 
     if keyboard_input.pressed(KeyCode::Left) {
-        player.position.x -= 1.0;
+        body.acceleration.x = -MOVEMENT_SPEED;
     }
     if keyboard_input.pressed(KeyCode::Right) {
-        player.position.x += 1.0;
+        body.acceleration.x = MOVEMENT_SPEED;
     }
 
-    if keyboard_input.pressed(KeyCode::Down) {
-        player.position.y -= 1.0;
+    if !keyboard_input.pressed(KeyCode::Left) && !keyboard_input.pressed(KeyCode::Right) {
+        body.acceleration.x = 0.0;
     }
-    if keyboard_input.pressed(KeyCode::Up) {
-        player.position.y += 1.0;
+
+    if keyboard_input.pressed(KeyCode::LAlt) {
+        body.acceleration.y = JUMP_FORCE;
     }
 }
 
-fn player_collision_system(
-    mut player: Query<&mut Quad2d, With<Player>>,
+fn player_physics_system(
+    mut player: Query<(&mut Quad2d, &mut RigidBody), With<Player>>,
     mut lines: Query<&Line2d, Without<Player>>,
 ) {
     if player.is_empty() {
         return;
     }
-    let mut player = player.single_mut();
+    let (mut current, mut body) = player.single_mut();
 
+    // Update rigid body
+    body.acceleration.y = clamp::clamp(GRAVITY, body.acceleration.y + GRAVITY, JUMP_FORCE);
+    body.velocity.y = clamp::clamp(
+        MAX_FALL_SPEED,
+        body.velocity.y + body.acceleration.y,
+        MAX_JUMP_SPEED,
+    );
+
+    body.acceleration.x += body.velocity.x * -0.2;
+    body.velocity.x = clamp::clamp(
+        -MAX_MOVEMENT_SPEED,
+        body.velocity.x + body.acceleration.x,
+        MAX_MOVEMENT_SPEED,
+    );
+
+    // Calculate the next position
+    let mut next = current.clone();
+    next.position += Point2d::new(body.velocity.x, body.velocity.y)
+        + Point2d::new(0.5 * body.acceleration.x, 0.5 * body.acceleration.y);
+
+    // Check for collisions and update
     for line in lines.iter_mut() {
-        for collision in collide_quad_line(&player, line) {
-            match collision {
-                Collision::Top(point) | Collision::Bottom(point) => {
-                    // if player.mid_left().x < point.x {
-                    //     player.position.x = point.x + (player.width / 2.) + 1.0;
-                    // }
-                    // if player.mid_right().x > point.x {
-                    //     player.position.x = point.x - (player.width / 2.) - 1.0;
-                    // }
+        let collisions = collide_quad_line(&next, line);
+        if collisions.contains_key(&Collision::Left) || collisions.contains_key(&Collision::Right) {
+            if let Some(point) = collisions.get(&Collision::Left) {
+                if next.bottom_left().y < point.y {
+                    next.position.y = (point.y + (current.height / 2.)).ceil();
                 }
-                Collision::Left(point) => {
-                    if player.bottom_left().y < point.y {
-                        player.position.y = point.y + (player.height / 2.) + 1.0;
-                    }
-                }
-                Collision::Right(point) => {
-                    if player.bottom_right().y < point.y {
-                        player.position.y = point.y + (player.height / 2.) + 1.0;
-                    }
+            }
+            if let Some(point) = collisions.get(&Collision::Right) {
+                if next.bottom_right().y < point.y {
+                    next.position.y = (point.y + (current.height / 2.)).ceil();
                 }
             }
         }
     }
+
+    // Finally, update position of the player
+    current.position = next.position;
 }
-
-// #[derive(Component)]
-// struct User;
-
-// fn line_p1_follows_cursor_system(
-//     main_camera_state: Query<&CameraCursor2d, With<MainCamera>>,
-//     mut user_lines: Query<&mut Line2d, With<User>>,
-// ) {
-//     if main_camera_state.is_empty() || user_lines.is_empty() {
-//         return;
-//     }
-
-//     let state = main_camera_state.single();
-//     let mut line = user_lines.single_mut();
-//     line.p1 = state.world_pos.into();
-// }
-
-// fn collision_system(
-//     user_lines: Query<&Line2d, With<User>>,
-//     mut quads: Query<&Quad2d, Without<User>>,
-//     mut lines: Query<&Line2d, Without<User>>,
-// ) {
-//     // check if line exists
-//     if user_lines.is_empty() {
-//         return;
-//     }
-//     let user_line = user_lines.single();
-
-//     for quad in quads.iter_mut() {
-//         let collisions = collide_quad_line(quad, user_line);
-//         dbg!(collisions);
-//     }
-
-//     for line in lines.iter_mut() {
-//         match collide_line_line(line, user_line) {
-//             Some(point) => {
-//                 dbg!(point);
-//             }
-//             None => {}
-//         }
-//     }
-// }
