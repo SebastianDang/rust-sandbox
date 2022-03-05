@@ -25,11 +25,11 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    let points: [Point2d; 4] = [
-        Point2d { x: -500.0, y: 0.0 },
-        Point2d { x: 50.0, y: 0.0 },
-        Point2d { x: 100.0, y: 50.0 },
-        Point2d { x: 150.0, y: 50.0 },
+    let points: [Vec2; 4] = [
+        Vec2::new(-500.0, 0.0),
+        Vec2::new(50.0, 0.0),
+        Vec2::new(100.0, 50.0),
+        Vec2::new(150.0, 50.0),
     ];
 
     for (curr, next) in [(0, 1), (1, 2), (2, 3)] {
@@ -132,18 +132,23 @@ fn player_physics_system(
 
     // Calculate the next position
     let mut next = current.clone();
-    next.position += Point2d::new(body.velocity.x, body.velocity.y)
-        + Point2d::new(0.5 * body.acceleration.x, 0.5 * body.acceleration.y);
+    next.position += Vec2::new(body.velocity.x, body.velocity.y)
+        + Vec2::new(0.5 * body.acceleration.x, 0.5 * body.acceleration.y);
+
+    // Infer some state
+    let bottom = current.mid_bottom().y + 1.0;
 
     // Check for collisions and update
-    for line in lines.iter_mut() {
+    for line in lines.iter_mut().filter(|line| points_below_y(line, bottom)) {
         let collisions = collide_quad_line(&next, line);
-        if collisions.contains_key(&Collision::Left) || collisions.contains_key(&Collision::Right) {
+        if collisions.contains_key(&Collision::Left) {
             if let Some(point) = collisions.get(&Collision::Left) {
                 if next.bottom_left().y < point.y {
                     next.position.y = (point.y + (current.height / 2.)).ceil();
                 }
             }
+        }
+        if collisions.contains_key(&Collision::Right) {
             if let Some(point) = collisions.get(&Collision::Right) {
                 if next.bottom_right().y < point.y {
                     next.position.y = (point.y + (current.height / 2.)).ceil();
@@ -154,4 +159,8 @@ fn player_physics_system(
 
     // Finally, update position of the player
     current.position = next.position;
+}
+
+pub fn points_below_y(line: &Line2d, y: f32) -> bool {
+    line.p0.y < y || line.p1.y < y
 }

@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use bevy::math::Vec2;
+
 use super::geometry::*;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -11,7 +13,7 @@ pub enum Collision {
 }
 
 /// Calculates intersection points for a quad and line
-pub fn collide_quad_line(quad: &Quad2d, line: &Line2d) -> HashMap<Collision, Point2d> {
+pub fn collide_quad_line(quad: &Quad2d, line: &Line2d) -> HashMap<Collision, Vec2> {
     let mut collisions = HashMap::new();
 
     if let Some(point) = collide_line_line(
@@ -46,7 +48,7 @@ pub fn collide_quad_line(quad: &Quad2d, line: &Line2d) -> HashMap<Collision, Poi
 }
 
 /// Calculates the intersection point for 2 lines
-pub fn collide_line_line(line_a: &Line2d, line_b: &Line2d) -> Option<Point2d> {
+pub fn collide_line_line(line_a: &Line2d, line_b: &Line2d) -> Option<Vec2> {
     collide_segment_segment(
         line_a.p0.x,
         line_a.p0.y,
@@ -74,7 +76,7 @@ pub fn collide_segment_segment(
     y3: f32,
     x4: f32,
     y4: f32,
-) -> Option<Point2d> {
+) -> Option<Vec2> {
     // calculate the distance to intersection point
     let num_a = (x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3);
     let den_a = (y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1);
@@ -88,7 +90,7 @@ pub fn collide_segment_segment(
     if u_a >= 0.0 && u_a <= 1.0 && u_b >= 0.0 && u_b <= 1.0 {
         let x = x1 + (u_a * (x2 - x1));
         let y = y1 + (u_a * (y2 - y1));
-        Some(Point2d::new(x, y))
+        Some(Vec2::new(x, y))
     } else {
         None
     }

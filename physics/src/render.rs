@@ -52,7 +52,7 @@ impl Plugin for RenderPlugin {
 fn render_lines_system(mut debug_lines: ResMut<DebugLines>, lines: Query<(&Line2d, &RenderColor)>) {
     for (line, render_color) in lines.iter() {
         let color = render_color.color;
-        debug_lines.line_colored(line.p0.as_vec3(), line.p1.as_vec3(), 0., color);
+        debug_lines.line_colored(line.p0.extend(0.0), line.p1.extend(0.0), 0., color);
     }
 }
 
@@ -60,10 +60,10 @@ fn render_quads_system(mut debug_lines: ResMut<DebugLines>, quads: Query<(&Quad2
     for (quad, render_color) in quads.iter() {
         let color = render_color.color;
 
-        let top_left = quad.top_left().as_vec3();
-        let top_right = quad.top_right().as_vec3();
-        let bottom_left = quad.bottom_left().as_vec3();
-        let bottom_right = quad.bottom_right().as_vec3();
+        let top_left = quad.top_left().extend(0.0);
+        let top_right = quad.top_right().extend(0.0);
+        let bottom_left = quad.bottom_left().extend(0.0);
+        let bottom_right = quad.bottom_right().extend(0.0);
 
         debug_lines.line_colored(top_left, top_right, 0., color);
         debug_lines.line_colored(top_left, bottom_left, 0., color);
