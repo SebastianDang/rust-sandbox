@@ -155,15 +155,22 @@ fn player_physics_system(
     }) {
         let current_line_y = line_y_at_x(line, current_clone.position.x);
         let next_line_y = line_y_at_x(line, next_clone.position.x);
-        if current_clone.mid_bottom().y >= current_line_y
-            && next_clone.mid_bottom().y <= next_line_y
-        {
+
+        let current_anchor = quad_anchor_point(&current_clone);
+        let next_anchor = quad_anchor_point(&next_clone);
+
+        if current_anchor.y >= current_line_y && next_anchor.y <= next_line_y {
             next.position.y = (next_line_y + (current.height / 2.)).ceil();
         }
     }
 
     // Finally, update position of the player
     current.position = next.position;
+}
+
+/// Provide an anchor point for the quad
+fn quad_anchor_point(quad: &Quad2d) -> Vec2 {
+    quad.mid_bottom()
 }
 
 /// Given a horizontal flat or sloped line, determine if x is within range
