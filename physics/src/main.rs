@@ -42,20 +42,29 @@ fn setup(mut commands: Commands) {
             .insert(RenderColor::default());
     }
 
+    // Below ground
     commands
         .spawn()
-        .insert(Line2d::new(-500.0, 0.0, -500.0, 500.0))
+        .insert(Line2d::new(-500.0, -50.0, 500.0, -50.0))
         .insert(RenderColor::default());
 
-    commands
-        .spawn()
-        .insert(Line2d::new(150.0, 50.0, 150.0, 500.0))
-        .insert(RenderColor::default());
+    // // Left wall
+    // commands
+    //     .spawn()
+    //     .insert(Line2d::new(-500.0, 0.0, -500.0, 500.0))
+    //     .insert(RenderColor::default());
 
-    commands
-        .spawn()
-        .insert(Line2d::new(-500.0, 500.0, 150.0, 500.0))
-        .insert(RenderColor::default());
+    // // Right wall
+    // commands
+    //     .spawn()
+    //     .insert(Line2d::new(150.0, 50.0, 150.0, 500.0))
+    //     .insert(RenderColor::default());
+
+    // // Top
+    // commands
+    //     .spawn()
+    //     .insert(Line2d::new(-500.0, 500.0, 150.0, 500.0))
+    //     .insert(RenderColor::default());
 
     commands
         .spawn()
@@ -135,25 +144,21 @@ fn player_physics_system(
     next.position += Vec2::new(body.velocity.x, body.velocity.y)
         + Vec2::new(0.5 * body.acceleration.x, 0.5 * body.acceleration.y);
 
-    // Infer some state
-    let bottom = current.mid_bottom().y + 1.0;
+    // Clone positions for calculations
+    let current_clone = current.clone();
+    let next_clone = next.clone();
 
     // Check for collisions and update
-    for line in lines.iter_mut().filter(|line| points_below_y(line, bottom)) {
-        let collisions = collide_quad_line(&next, line);
-        if collisions.contains_key(&Collision::Left) {
-            if let Some(point) = collisions.get(&Collision::Left) {
-                if next.bottom_left().y < point.y {
-                    next.position.y = (point.y + (current.height / 2.)).ceil();
-                }
-            }
-        }
-        if collisions.contains_key(&Collision::Right) {
-            if let Some(point) = collisions.get(&Collision::Right) {
-                if next.bottom_right().y < point.y {
-                    next.position.y = (point.y + (current.height / 2.)).ceil();
-                }
-            }
+    for line in lines.iter_mut().filter(|line| {
+        line_y_exists_at_x(line, current_clone.position.x)
+            || line_y_exists_at_x(line, next_clone.position.x)
+    }) {
+        let current_line_y = line_y_at_x(line, current_clone.position.x);
+        let next_line_y = line_y_at_x(line, next_clone.position.x);
+        if current_clone.mid_bottom().y >= current_line_y
+            && next_clone.mid_bottom().y <= next_line_y
+        {
+            next.position.y = (next_line_y + (current.height / 2.)).ceil();
         }
     }
 
@@ -161,6 +166,13 @@ fn player_physics_system(
     current.position = next.position;
 }
 
-pub fn points_below_y(line: &Line2d, y: f32) -> bool {
-    line.p0.y < y || line.p1.y < y
+/// Given a horizontal flat or sloped line, determine if x is within range
+fn line_y_exists_at_x(line: &Line2d, x: f32) -> bool {
+    x > line.p0.x && x < line.p1.x
+}
+
+/// Given a horizontal flat or sloped line, calculate the y coordinate for x coordinate
+fn line_y_at_x(line: &Line2d, x: f32) -> f32 {
+    let slope = (line.p1.y - line.p0.y) / (line.p1.x - line.p0.x);
+    line.p1.y + ((x - line.p1.x) * slope)
 }
