@@ -144,20 +144,18 @@ fn player_physics_system(
     next.position += Vec2::new(body.velocity.x, body.velocity.y)
         + Vec2::new(0.5 * body.acceleration.x, 0.5 * body.acceleration.y);
 
-    // Clone positions for calculations
-    let current_clone = current.clone();
+    // Clone position for calculations
     let next_clone = next.clone();
 
     // Check for collisions and update
     for line in lines.iter_mut().filter(|line| {
-        line_y_exists_at_x(line, current_clone.position.x)
-            || line_y_exists_at_x(line, next_clone.position.x)
+        line_x_in_range(line, current.position.x) || line_x_in_range(line, next_clone.position.x)
     }) {
-        let current_line_y = line_y_at_x(line, current_clone.position.x);
-        let next_line_y = line_y_at_x(line, next_clone.position.x);
+        let current_line_y = line_y_at_x(line, current.position.x);
+        let next_line_y = line_y_at_x(line, next.position.x);
 
-        let current_anchor = quad_anchor_point(&current_clone);
-        let next_anchor = quad_anchor_point(&next_clone);
+        let current_anchor = quad_anchor_point(&current);
+        let next_anchor = quad_anchor_point(&next);
 
         if current_anchor.y >= current_line_y && next_anchor.y <= next_line_y {
             next.position.y = (next_line_y + (current.height / 2.)).ceil();
@@ -174,11 +172,12 @@ fn quad_anchor_point(quad: &Quad2d) -> Vec2 {
 }
 
 /// Given a horizontal flat or sloped line, determine if x is within range
-fn line_y_exists_at_x(line: &Line2d, x: f32) -> bool {
+fn line_x_in_range(line: &Line2d, x: f32) -> bool {
     x > line.p0.x && x < line.p1.x
 }
 
 /// Given a horizontal flat or sloped line, calculate the y coordinate for x coordinate
+/// Keep the y coordinate within range of the two points
 fn line_y_at_x(line: &Line2d, x: f32) -> f32 {
     // Calculate the slope of the line
     let slope = (line.p1.y - line.p0.y) / (line.p1.x - line.p0.x);
