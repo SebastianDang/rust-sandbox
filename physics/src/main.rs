@@ -25,46 +25,29 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    let points: [Vec2; 4] = [
-        Vec2::new(-500.0, 0.0),
-        Vec2::new(50.0, 0.0),
-        Vec2::new(100.0, 50.0),
-        Vec2::new(150.0, 50.0),
+    let points: [Vec2; 6] = [
+        Vec2::new(-400.0, 0.0),
+        Vec2::new(-250.0, 0.0),
+        Vec2::new(-200.0, 50.0),
+        Vec2::new(200.0, 50.0),
+        Vec2::new(250.0, 0.0),
+        Vec2::new(400.0, 0.0),
     ];
 
-    for (curr, next) in [(0, 1), (1, 2), (2, 3)] {
+    for it in 1..points.len() {
         commands
             .spawn()
             .insert(Line2d::from_points(
-                points[curr].clone(),
-                points[next].clone(),
+                points[it - 1].clone(),
+                points[it].clone(),
             ))
             .insert(RenderColor::default());
     }
 
-    // Below ground
     commands
         .spawn()
         .insert(Line2d::new(-500.0, -50.0, 500.0, -50.0))
         .insert(RenderColor::default());
-
-    // // Left wall
-    // commands
-    //     .spawn()
-    //     .insert(Line2d::new(-500.0, 0.0, -500.0, 500.0))
-    //     .insert(RenderColor::default());
-
-    // // Right wall
-    // commands
-    //     .spawn()
-    //     .insert(Line2d::new(150.0, 50.0, 150.0, 500.0))
-    //     .insert(RenderColor::default());
-
-    // // Top
-    // commands
-    //     .spawn()
-    //     .insert(Line2d::new(-500.0, 500.0, 150.0, 500.0))
-    //     .insert(RenderColor::default());
 
     commands
         .spawn()
@@ -77,12 +60,16 @@ fn setup(mut commands: Commands) {
 #[derive(Component)]
 pub struct Player;
 
+// Horizontal constants
 const MOVEMENT_SPEED: f32 = 1.0;
 const MAX_MOVEMENT_SPEED: f32 = 2.0;
-const MAX_FALL_SPEED: f32 = -4.0;
-const MAX_JUMP_SPEED: f32 = 4.0;
+const MOVEMENT_FRICTION: f32 = -0.2;
+
+// Vertical constants
 const JUMP_FORCE: f32 = 4.0;
+const MAX_JUMP_SPEED: f32 = 4.0;
 const GRAVITY: f32 = -1.0;
+const MAX_FALL_SPEED: f32 = -4.0;
 
 #[derive(Component, Default)]
 struct RigidBody {
@@ -132,7 +119,7 @@ fn player_physics_system(
         MAX_JUMP_SPEED,
     );
 
-    body.acceleration.x += body.velocity.x * -0.2;
+    body.acceleration.x += body.velocity.x * MOVEMENT_FRICTION;
     body.velocity.x = clamp::clamp(
         -MAX_MOVEMENT_SPEED,
         body.velocity.x + body.acceleration.x,
