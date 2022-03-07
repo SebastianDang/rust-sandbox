@@ -69,7 +69,7 @@ const MOVEMENT_FRICTION: f32 = -0.2;
 const JUMP_FORCE: f32 = 4.0;
 const MAX_JUMP_SPEED: f32 = 4.0;
 const GRAVITY: f32 = -1.0;
-const MAX_FALL_SPEED: f32 = -4.0;
+const MAX_FALL_SPEED: f32 = -2.0;
 
 #[derive(Component, Default)]
 struct RigidBody {
@@ -131,21 +131,18 @@ fn player_physics_system(
     next.position += Vec2::new(body.velocity.x, body.velocity.y)
         + Vec2::new(0.5 * body.acceleration.x, 0.5 * body.acceleration.y);
 
-    // Clone position for calculations
-    let next_clone = next.clone();
-
     // Check for collisions and update
-    for line in lines.iter_mut().filter(|line| {
-        line_x_in_range(line, current.position.x) || line_x_in_range(line, next_clone.position.x)
-    }) {
-        let current_line_y = line_y_at_x(line, current.position.x);
-        let next_line_y = line_y_at_x(line, next.position.x);
+    for line in lines.iter_mut() {
+        if line_x_in_range(line, current.position.x) || line_x_in_range(line, next.position.x) {
+            let current_line_y = line_y_at_x(line, current.position.x);
+            let next_line_y = line_y_at_x(line, next.position.x);
 
-        let current_anchor = quad_anchor_point(&current);
-        let next_anchor = quad_anchor_point(&next);
+            let current_anchor = quad_anchor_point(&current);
+            let next_anchor = quad_anchor_point(&next);
 
-        if current_anchor.y >= current_line_y && next_anchor.y <= next_line_y {
-            next.position.y = (next_line_y + (current.height / 2.)).ceil();
+            if current_anchor.y >= current_line_y && next_anchor.y <= next_line_y {
+                next.position.y = (next_line_y + (current.height / 2.)).ceil();
+            }
         }
     }
 
