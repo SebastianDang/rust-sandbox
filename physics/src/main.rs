@@ -19,8 +19,9 @@ fn main() {
         .add_plugin(RenderPlugin)
         .add_startup_system(setup)
         .add_startup_system(new_main_camera)
+        .add_system(rigid_body_system)
         .add_system(player_movement_system)
-        .add_system(player_physics_system)
+        .add_system(player_collider_system)
         .run();
 }
 
@@ -76,8 +77,6 @@ fn spawn_lines_from_points(commands: &mut Commands, points: &[Vec2], _layer: u32
             .insert(RenderColor::default());
     }
 }
-#[derive(Component)]
-pub struct Player;
 
 // Horizontal constants
 const MOVEMENT_SPEED: f32 = 1.0;
@@ -95,6 +94,27 @@ struct RigidBody {
     velocity: Vec2,
     acceleration: Vec2,
 }
+
+fn rigid_body_system(mut rigid_bodies: Query<&mut RigidBody>) {
+    for mut body in rigid_bodies.iter_mut() {
+        body.acceleration.y = clamp::clamp(GRAVITY, body.acceleration.y + GRAVITY, JUMP_FORCE);
+        body.velocity.y = clamp::clamp(
+            MAX_FALL_SPEED,
+            body.velocity.y + body.acceleration.y,
+            MAX_JUMP_SPEED,
+        );
+
+        body.acceleration.x += body.velocity.x * MOVEMENT_FRICTION;
+        body.velocity.x = clamp::clamp(
+            -MAX_MOVEMENT_SPEED,
+            body.velocity.x + body.acceleration.x,
+            MAX_MOVEMENT_SPEED,
+        );
+    }
+}
+
+#[derive(Component)]
+pub struct Player;
 
 fn player_movement_system(
     keyboard_input: Res<Input<KeyCode>>,
@@ -121,29 +141,14 @@ fn player_movement_system(
     }
 }
 
-fn player_physics_system(
-    mut player: Query<(&mut Quad2d, &mut RigidBody), With<Player>>,
+fn player_collider_system(
+    mut player: Query<(&mut Quad2d, &RigidBody), With<Player>>,
     mut lines: Query<&Line2d, Without<Player>>,
 ) {
     if player.is_empty() {
         return;
     }
-    let (mut current, mut body) = player.single_mut();
-
-    // Update rigid body
-    body.acceleration.y = clamp::clamp(GRAVITY, body.acceleration.y + GRAVITY, JUMP_FORCE);
-    body.velocity.y = clamp::clamp(
-        MAX_FALL_SPEED,
-        body.velocity.y + body.acceleration.y,
-        MAX_JUMP_SPEED,
-    );
-
-    body.acceleration.x += body.velocity.x * MOVEMENT_FRICTION;
-    body.velocity.x = clamp::clamp(
-        -MAX_MOVEMENT_SPEED,
-        body.velocity.x + body.acceleration.x,
-        MAX_MOVEMENT_SPEED,
-    );
+    let (mut current, body) = player.single_mut();
 
     // Calculate the next position
     let mut next = current.clone();
@@ -166,7 +171,7 @@ fn player_physics_system(
         }
     }
 
-    // Finally, update position of the player
+    // Finally, update the player
     current.position = next.position;
 }
 
