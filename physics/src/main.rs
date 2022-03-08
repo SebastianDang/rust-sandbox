@@ -25,29 +25,37 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    let points: [Vec2; 6] = [
-        Vec2::new(-400.0, 0.0),
-        Vec2::new(-250.0, 0.0),
-        Vec2::new(-200.0, 50.0),
-        Vec2::new(200.0, 50.0),
-        Vec2::new(250.0, 0.0),
-        Vec2::new(400.0, 0.0),
+    let layer_0: [Vec2; 8] = [
+        Vec2::new(-1000.0, 300.0),
+        Vec2::new(45.0, 300.0),
+        Vec2::new(135.0, 240.0),
+        Vec2::new(225.0, 180.0),
+        Vec2::new(315.0, 120.0),
+        Vec2::new(405.0, 60.0),
+        Vec2::new(495.0, 0.0),
+        Vec2::new(534.0, 0.0),
     ];
 
-    for it in 1..points.len() {
-        commands
-            .spawn()
-            .insert(Line2d::from_points(
-                points[it - 1].clone(),
-                points[it].clone(),
-            ))
-            .insert(RenderColor::default());
-    }
+    let layer_1: [Vec2; 8] = [
+        Vec2::new(96.0, -180.0),
+        Vec2::new(96.0, -120.0),
+        Vec2::new(186.0, -120.0),
+        Vec2::new(186.0, -60.0),
+        Vec2::new(276.0, -60.0),
+        Vec2::new(276.0, 0.0),
+        Vec2::new(534.0, 0.0),
+        Vec2::new(1000.0, 0.0),
+    ];
 
-    commands
-        .spawn()
-        .insert(Line2d::new(-500.0, -50.0, 500.0, -50.0))
-        .insert(RenderColor::default());
+    let layer_2: [Vec2; 3] = [
+        Vec2::new(-1000.0, -180.0),
+        Vec2::new(0.0, -180.0),
+        Vec2::new(1000.0, -180.0),
+    ];
+
+    spawn_lines_from_points(&mut commands, &layer_0, 0);
+    spawn_lines_from_points(&mut commands, &layer_1, 1);
+    spawn_lines_from_points(&mut commands, &layer_2, 2);
 
     commands
         .spawn()
@@ -57,6 +65,17 @@ fn setup(mut commands: Commands) {
         .insert(RigidBody::default());
 }
 
+fn spawn_lines_from_points(commands: &mut Commands, points: &[Vec2], _layer: u32) {
+    for it in 1..points.len() {
+        commands
+            .spawn()
+            .insert(Line2d::from_points(
+                points[it - 1].clone(),
+                points[it].clone(),
+            ))
+            .insert(RenderColor::default());
+    }
+}
 #[derive(Component)]
 pub struct Player;
 
@@ -133,15 +152,16 @@ fn player_physics_system(
 
     // Check for collisions and update
     for line in lines.iter_mut() {
-        if line_x_in_range(line, current.position.x) || line_x_in_range(line, next.position.x) {
-            let current_line_y = line_y_at_x(line, current.position.x);
-            let next_line_y = line_y_at_x(line, next.position.x);
+        // Get the anchor points to compare
+        let current_anchor = quad_anchor_point(&current);
+        let next_anchor = quad_anchor_point(&next);
 
-            let current_anchor = quad_anchor_point(&current);
-            let next_anchor = quad_anchor_point(&next);
+        if line_x_in_range(line, current_anchor.x) || line_x_in_range(line, next_anchor.x) {
+            let current_line_y = line_y_at_x(line, current_anchor.x);
+            let next_line_y = line_y_at_x(line, next_anchor.x);
 
             if current_anchor.y >= current_line_y && next_anchor.y <= next_line_y {
-                next.position.y = (next_line_y + (current.height / 2.)).ceil();
+                quad_set_pos_from_anchor_point(&mut next, None, Some(next_line_y));
             }
         }
     }
@@ -155,9 +175,19 @@ fn quad_anchor_point(quad: &Quad2d) -> Vec2 {
     quad.mid_bottom()
 }
 
+/// Set the position using the anchor point for the quad
+fn quad_set_pos_from_anchor_point(quad: &mut Quad2d, x: Option<f32>, y: Option<f32>) {
+    if x.is_some() {
+        quad.position.x = x.unwrap();
+    }
+    if y.is_some() {
+        quad.position.y = (y.unwrap() + (quad.height / 2.)).ceil();
+    }
+}
+
 /// Given a horizontal flat or sloped line, determine if x is within range
 fn line_x_in_range(line: &Line2d, x: f32) -> bool {
-    x > line.p0.x && x < line.p1.x
+    x >= line.p0.x && x <= line.p1.x
 }
 
 /// Given a horizontal flat or sloped line, calculate the y coordinate for x coordinate
