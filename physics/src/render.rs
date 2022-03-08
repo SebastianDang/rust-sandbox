@@ -52,7 +52,7 @@ impl Plugin for RenderPlugin {
 fn render_lines_system(mut debug_lines: ResMut<DebugLines>, lines: Query<(&Line2d, &RenderColor)>) {
     for (line, render_color) in lines.iter() {
         let color = render_color.color;
-        debug_lines.line_colored(line.p0.extend(0.0), line.p1.extend(0.0), 0., color);
+        debug_lines.line_colored(line.p1.extend(0.0), line.p2.extend(0.0), 0., color);
     }
 }
 

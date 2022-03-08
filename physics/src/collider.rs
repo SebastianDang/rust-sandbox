@@ -50,14 +50,14 @@ pub fn collide_quad_line(quad: &Quad2d, line: &Line2d) -> HashMap<Collision, Vec
 /// Calculates the intersection point for 2 lines
 pub fn collide_line_line(line_a: &Line2d, line_b: &Line2d) -> Option<Vec2> {
     collide_segment_segment(
-        line_a.p0.x,
-        line_a.p0.y,
         line_a.p1.x,
         line_a.p1.y,
-        line_b.p0.x,
-        line_b.p0.y,
+        line_a.p2.x,
+        line_a.p2.y,
         line_b.p1.x,
         line_b.p1.y,
+        line_b.p2.x,
+        line_b.p2.y,
     )
 }
 

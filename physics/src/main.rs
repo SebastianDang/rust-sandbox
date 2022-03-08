@@ -187,21 +187,21 @@ fn quad_set_pos_from_anchor_point(quad: &mut Quad2d, x: Option<f32>, y: Option<f
 
 /// Given a horizontal flat or sloped line, determine if x is within range
 fn line_x_in_range(line: &Line2d, x: f32) -> bool {
-    x >= line.p0.x && x <= line.p1.x
+    x >= line.p1.x && x <= line.p2.x
 }
 
 /// Given a horizontal flat or sloped line, calculate the y coordinate for x coordinate
 /// Keep the y coordinate within range of the two points
 fn line_y_at_x(line: &Line2d, x: f32) -> f32 {
     // Calculate the slope of the line
-    let slope = (line.p1.y - line.p0.y) / (line.p1.x - line.p0.x);
+    let slope = (line.p2.y - line.p1.y) / (line.p2.x - line.p1.x);
 
     // Get the range of values for y
-    let min = line.p0.y.min(line.p1.y);
-    let max = line.p0.y.max(line.p1.y);
+    let min = line.p1.y.min(line.p2.y);
+    let max = line.p1.y.max(line.p2.y);
 
     // Calculate the y at x
-    let value = line.p1.y + ((x - line.p1.x) * slope);
+    let value = line.p2.y + ((x - line.p2.x) * slope);
 
     // Clamp the values
     if min == max {

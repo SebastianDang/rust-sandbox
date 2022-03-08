@@ -2277,6 +2277,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "physics"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_prototype_debug_lines",
+ "clamp",
+]
+
+[[package]]
 name = "pin-project-lite"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2460,15 +2469,6 @@ dependencies = [
  "base64",
  "bitflags",
  "serde",
-]
-
-[[package]]
-name = "rust-collision"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_prototype_debug_lines",
- "clamp",
 ]
 
 [[package]]
