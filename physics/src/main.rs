@@ -15,14 +15,17 @@ use render::*;
 mod foothold;
 use foothold::*;
 
+mod rigid_body;
+use rigid_body::*;
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(CameraPlugin)
         .add_plugin(RenderPlugin)
+        .add_plugin(RigidBodyPlugin)
         .add_startup_system(setup)
         .add_startup_system(new_main_camera)
-        .add_system(rigid_body_system)
         .add_system(player_movement_system)
         .add_system(player_collider_system)
         .run();
@@ -80,42 +83,7 @@ fn spawn_foothold_from_points(commands: &mut Commands, points: &[Vec2], layer: u
         .insert(RenderColor::default());
 }
 
-// Horizontal constants
-const MOVEMENT_SPEED: f32 = 1.0;
-const MAX_MOVEMENT_SPEED: f32 = 2.0;
-const MOVEMENT_FRICTION: f32 = -0.2;
-
-// Vertical constants
-const JUMP_FORCE: f32 = 4.0;
-const MAX_JUMP_SPEED: f32 = 4.0;
-const GRAVITY: f32 = -1.0;
-const MAX_FALL_SPEED: f32 = -2.0;
-
-#[derive(Component, Default)]
-struct RigidBody {
-    velocity: Vec2,
-    acceleration: Vec2,
-}
-
-fn rigid_body_system(mut rigid_bodies: Query<&mut RigidBody>) {
-    for mut body in rigid_bodies.iter_mut() {
-        body.acceleration.y = clamp::clamp(GRAVITY, body.acceleration.y + GRAVITY, JUMP_FORCE);
-        body.velocity.y = clamp::clamp(
-            MAX_FALL_SPEED,
-            body.velocity.y + body.acceleration.y,
-            MAX_JUMP_SPEED,
-        );
-
-        body.acceleration.x += body.velocity.x * MOVEMENT_FRICTION;
-        body.velocity.x = clamp::clamp(
-            -MAX_MOVEMENT_SPEED,
-            body.velocity.x + body.acceleration.x,
-            MAX_MOVEMENT_SPEED,
-        );
-    }
-}
-
-#[derive(Component)]
+#[derive(Clone, Component, Debug)]
 pub struct Player;
 
 fn player_movement_system(
