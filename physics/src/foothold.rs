@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Component, Clone, Debug)]
+#[derive(Clone, Component, Debug)]
 pub struct Foothold {
     pub points: Vec<Vec2>,
 }
