@@ -78,3 +78,6 @@ impl Foothold {
         None
     }
 }
+
+#[derive(Clone, Component)]
+pub struct FootholdLayer(pub u32);

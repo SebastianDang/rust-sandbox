@@ -72,14 +72,11 @@ fn setup(mut commands: Commands) {
         .insert(RigidBody::default());
 }
 
-#[derive(Clone, Component)]
-pub struct Layer(pub u32);
-
 fn spawn_foothold_from_points(commands: &mut Commands, points: &[Vec2], layer: u32) {
     commands
         .spawn()
         .insert(Foothold::from_points(points))
-        .insert(Layer(layer))
+        .insert(FootholdLayer(layer))
         .insert(RenderColor::default());
 }
 
@@ -115,8 +112,8 @@ const COLLISION_THRESHOLD: f32 = 4.0;
 
 fn player_collider_system(
     mut commands: Commands,
-    mut player: Query<(Entity, &mut Quad2d, &RigidBody, Option<&Layer>), With<Player>>,
-    mut footholds: Query<(&Foothold, &Layer), (With<Layer>, Without<Player>)>,
+    mut player: Query<(Entity, &mut Quad2d, &RigidBody, Option<&FootholdLayer>), With<Player>>,
+    mut footholds: Query<(&Foothold, &FootholdLayer), (With<Foothold>, With<FootholdLayer>)>,
 ) {
     if player.is_empty() {
         return;
@@ -168,7 +165,7 @@ fn player_collider_system(
 
         // No collisions. Remove the existing layer
         if collisions == 0 {
-            commands.entity(entity).remove::<Layer>();
+            commands.entity(entity).remove::<FootholdLayer>();
         }
     }
 
