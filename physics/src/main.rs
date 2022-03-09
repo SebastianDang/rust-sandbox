@@ -12,6 +12,9 @@ use collider::*;
 mod render;
 use render::*;
 
+mod foothold;
+use foothold::*;
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -54,9 +57,9 @@ fn setup(mut commands: Commands) {
         Vec2::new(1000.0, -180.0),
     ];
 
-    spawn_lines_from_points(&mut commands, &layer_0, 0);
-    spawn_lines_from_points(&mut commands, &layer_1, 1);
-    spawn_lines_from_points(&mut commands, &layer_2, 2);
+    spawn_foothold_from_points(&mut commands, &layer_0, 0);
+    spawn_foothold_from_points(&mut commands, &layer_1, 1);
+    spawn_foothold_from_points(&mut commands, &layer_2, 2);
 
     commands
         .spawn()
@@ -66,16 +69,11 @@ fn setup(mut commands: Commands) {
         .insert(RigidBody::default());
 }
 
-fn spawn_lines_from_points(commands: &mut Commands, points: &[Vec2], _layer: u32) {
-    for it in 1..points.len() {
-        commands
-            .spawn()
-            .insert(Line2d::from_points(
-                points[it - 1].clone(),
-                points[it].clone(),
-            ))
-            .insert(RenderColor::default());
-    }
+fn spawn_foothold_from_points(commands: &mut Commands, points: &[Vec2], _layer: u32) {
+    commands
+        .spawn()
+        .insert(Foothold::from_points(points))
+        .insert(RenderColor::default());
 }
 
 // Horizontal constants
@@ -143,7 +141,7 @@ fn player_movement_system(
 
 fn player_collider_system(
     mut player: Query<(&mut Quad2d, &RigidBody), With<Player>>,
-    mut lines: Query<&Line2d, Without<Player>>,
+    mut footholds: Query<&Foothold, Without<Player>>,
 ) {
     if player.is_empty() {
         return;
@@ -156,17 +154,20 @@ fn player_collider_system(
         + Vec2::new(0.5 * body.acceleration.x, 0.5 * body.acceleration.y);
 
     // Check for collisions and update
-    for line in lines.iter_mut() {
+    for foothold in footholds.iter_mut() {
         // Get the anchor points to compare
         let current_anchor = quad_anchor_point(&current);
         let next_anchor = quad_anchor_point(&next);
 
-        if line_x_in_range(line, current_anchor.x) || line_x_in_range(line, next_anchor.x) {
-            let current_line_y = line_y_at_x(line, current_anchor.x);
-            let next_line_y = line_y_at_x(line, next_anchor.x);
-
-            if current_anchor.y >= current_line_y && next_anchor.y <= next_line_y {
-                quad_set_pos_from_anchor_point(&mut next, None, Some(next_line_y));
+        if foothold.get_x_in_range(current_anchor.x) || foothold.get_x_in_range(next_anchor.x) {
+            let current_line_y = foothold.get_y_at_x(current_anchor.x);
+            let next_line_y = foothold.get_y_at_x(next_anchor.x);
+            if current_line_y.is_some() && next_line_y.is_some() {
+                let current_line_y = current_line_y.unwrap();
+                let next_line_y = next_line_y.unwrap();
+                if current_anchor.y >= current_line_y && next_anchor.y <= next_line_y {
+                    quad_set_pos_from_anchor_point(&mut next, None, Some(next_line_y));
+                }
             }
         }
     }
@@ -187,31 +188,5 @@ fn quad_set_pos_from_anchor_point(quad: &mut Quad2d, x: Option<f32>, y: Option<f
     }
     if y.is_some() {
         quad.position.y = (y.unwrap() + (quad.height / 2.)).ceil();
-    }
-}
-
-/// Given a horizontal flat or sloped line, determine if x is within range
-fn line_x_in_range(line: &Line2d, x: f32) -> bool {
-    x >= line.p1.x && x <= line.p2.x
-}
-
-/// Given a horizontal flat or sloped line, calculate the y coordinate for x coordinate
-/// Keep the y coordinate within range of the two points
-fn line_y_at_x(line: &Line2d, x: f32) -> f32 {
-    // Calculate the slope of the line
-    let slope = (line.p2.y - line.p1.y) / (line.p2.x - line.p1.x);
-
-    // Get the range of values for y
-    let min = line.p1.y.min(line.p2.y);
-    let max = line.p1.y.max(line.p2.y);
-
-    // Calculate the y at x
-    let value = line.p2.y + ((x - line.p2.x) * slope);
-
-    // Clamp the values
-    if min == max {
-        value
-    } else {
-        clamp::clamp(min, value, max)
     }
 }
