@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+/// Represents a foothold as a set of points.
 #[derive(Clone, Component, Debug)]
 pub struct Foothold {
     pub points: Vec<Vec2>,
@@ -79,5 +80,6 @@ impl Foothold {
     }
 }
 
+/// Represents the layer a foothold belongs to.
 #[derive(Clone, Component)]
 pub struct FootholdLayer(pub u32);
