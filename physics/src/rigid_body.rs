@@ -11,12 +11,14 @@ pub const MAX_JUMP_SPEED: f32 = 4.0;
 pub const GRAVITY: f32 = -1.0;
 pub const MAX_FALL_SPEED: f32 = -2.0;
 
+/// Represents rigid body properties.
 #[derive(Component, Default)]
 pub struct RigidBody {
     pub velocity: Vec2,
     pub acceleration: Vec2,
 }
 
+/// Plugin for rigid body components.
 pub struct RigidBodyPlugin;
 
 impl Plugin for RigidBodyPlugin {
@@ -25,6 +27,11 @@ impl Plugin for RigidBodyPlugin {
     }
 }
 
+/// System used for updating rigid body components.
+///
+/// # Arguments
+///
+/// * `rigid_bodies`: Rigid body components.
 pub fn rigid_body_system(mut rigid_bodies: Query<&mut RigidBody>) {
     for mut body in rigid_bodies.iter_mut() {
         body.acceleration.y = clamp::clamp(GRAVITY, body.acceleration.y + GRAVITY, JUMP_FORCE);
