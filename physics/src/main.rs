@@ -139,6 +139,8 @@ fn player_movement_system(
     }
 }
 
+const COLLISION_THRESHOLD: f32 = 4.0;
+
 fn player_collider_system(
     mut player: Query<(&mut Quad2d, &RigidBody), With<Player>>,
     mut footholds: Query<&Foothold, Without<Player>>,
@@ -159,14 +161,16 @@ fn player_collider_system(
         let current_anchor = quad_anchor_point(&current);
         let next_anchor = quad_anchor_point(&next);
 
-        if foothold.get_x_in_range(current_anchor.x) || foothold.get_x_in_range(next_anchor.x) {
+        if foothold.get_x_in_range(current_anchor.x) && foothold.get_x_in_range(next_anchor.x) {
             let current_line_y = foothold.get_y_at_x(current_anchor.x);
             let next_line_y = foothold.get_y_at_x(next_anchor.x);
             if current_line_y.is_some() && next_line_y.is_some() {
                 let current_line_y = current_line_y.unwrap();
                 let next_line_y = next_line_y.unwrap();
-                if current_anchor.y >= current_line_y && next_anchor.y <= next_line_y {
-                    quad_set_pos_from_anchor_point(&mut next, None, Some(next_line_y));
+                if (current_line_y - next_line_y).abs() < COLLISION_THRESHOLD {
+                    if current_anchor.y >= current_line_y && next_anchor.y <= next_line_y {
+                        quad_set_pos_from_anchor_point(&mut next, None, Some(next_line_y));
+                    }
                 }
             }
         }
