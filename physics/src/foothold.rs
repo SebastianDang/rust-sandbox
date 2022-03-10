@@ -79,7 +79,7 @@ impl Foothold {
     }
 
     /// Gets the angle if x is within the range of points of this foothold.
-    /// Returns the angle in degrees.
+    /// Returns the angle in radians.
     ///
     /// # Arguments
     ///
@@ -103,7 +103,7 @@ impl Foothold {
             // Check if 2 points contain x
             if x >= p1.x && x <= p2.x {
                 let slope = (p2.y - p1.y) / (p2.x - p1.x);
-                let angle = slope.atan().to_degrees();
+                let angle = slope.atan();
                 return Some(angle);
             }
         }
