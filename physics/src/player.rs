@@ -103,25 +103,6 @@ fn player_collider_system(
     current.position = next.position;
 }
 
-// fn player_slope_system(
-//     player: Query<(&Quad2d, &FootholdLayer), (With<Player>, With<FootholdLayer>)>,
-//     footholds: Query<(&Foothold, &FootholdLayer), (With<Foothold>, With<FootholdLayer>)>,
-// ) {
-//     if player.is_empty() {
-//         return;
-//     }
-//     let (current, layer) = player.single();
-
-//     for (foothold, _) in footholds
-//         .iter()
-//         .filter(|(_, foothold_layer)| foothold_layer.0 == layer.0)
-//     {
-//         if let Some(angle) = foothold.get_angle_at_x(current.position.x) {
-//             println!("{}", angle);
-//         }
-//     }
-// }
-
 /// Calculate any collisions for a foothold, using the current and next points
 fn calculate_fh_collision(foothold: &Foothold, current: Vec2, next: Vec2) -> Option<Vec2> {
     // Get the foothold y position for current and next points
@@ -136,6 +117,15 @@ fn calculate_fh_collision(foothold: &Foothold, current: Vec2, next: Vec2) -> Opt
         }
     }
     None
+}
+
+/// Calculate the angle for a given foothold, using the current point
+fn calculate_fh_angle(foothold: &Foothold, current: Vec2) -> f32 {
+    if let Some(angle) = foothold.get_angle_at_x(current.x) {
+        angle
+    } else {
+        0.0
+    }
 }
 
 /// Provide an anchor point for the quad
