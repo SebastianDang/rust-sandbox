@@ -141,25 +141,10 @@ fn player_collider_system(
             .iter_mut()
             .filter(|(_, foothold_layer)| foothold_layer.0 == layer.0)
         {
-            // Determine if the x is in range of this foothold
-            if foothold.get_x_in_range(current_anchor.x) && foothold.get_x_in_range(next_anchor.x) {
-                // Get the foothold y position for current and next points
-                let current_line_y = foothold.get_y_at_x(current_anchor.x);
-                let next_line_y = foothold.get_y_at_x(next_anchor.x);
-
-                // If foothold points exist, check for collision
-                if current_line_y.is_some() && next_line_y.is_some() {
-                    let current_line_y = current_line_y.unwrap();
-                    let next_line_y = next_line_y.unwrap();
-
-                    // Important: Use this threshold to check for realistic changes in y
-                    if (current_line_y - next_line_y).abs() < COLLISION_THRESHOLD {
-                        if current_anchor.y >= current_line_y && next_anchor.y <= next_line_y {
-                            quad_set_pos_from_anchor_point(&mut next, None, Some(next_line_y));
-                            collisions += 1; // Collision found in this layer
-                        }
-                    }
-                }
+            if let Some(collision) = calculate_fh_collision(&foothold, current_anchor, next_anchor)
+            {
+                quad_set_pos_from_anchor_point(&mut next, None, Some(collision.y));
+                collisions += 1; // Collision found in this layer
             }
         }
 
@@ -173,31 +158,35 @@ fn player_collider_system(
     if collisions == 0 {
         // Foothold collision logic
         for (foothold, foothold_layer) in footholds.iter_mut() {
-            // Determine if the x is in range of this foothold
-            if foothold.get_x_in_range(current_anchor.x) && foothold.get_x_in_range(next_anchor.x) {
-                // Get the foothold y position for current and next points
-                let current_line_y = foothold.get_y_at_x(current_anchor.x);
-                let next_line_y = foothold.get_y_at_x(next_anchor.x);
-
-                // If foothold points exist, check for collision
-                if current_line_y.is_some() && next_line_y.is_some() {
-                    let current_line_y = current_line_y.unwrap();
-                    let next_line_y = next_line_y.unwrap();
-
-                    // Important: Use this threshold to check for realistic changes in y
-                    if (current_line_y - next_line_y).abs() < COLLISION_THRESHOLD {
-                        if current_anchor.y >= current_line_y && next_anchor.y <= next_line_y {
-                            quad_set_pos_from_anchor_point(&mut next, None, Some(next_line_y));
-                            commands.entity(entity).insert(foothold_layer.clone());
-                        }
-                    }
-                }
+            if let Some(collision) = calculate_fh_collision(&foothold, current_anchor, next_anchor)
+            {
+                quad_set_pos_from_anchor_point(&mut next, None, Some(collision.y));
+                commands.entity(entity).insert(foothold_layer.clone());
             }
         }
     }
 
     // Finally, update the player's position
     current.position = next.position;
+}
+
+/// Calculate any collisions for a foothold, using the current and next points
+fn calculate_fh_collision(foothold: &Foothold, current: Vec2, next: Vec2) -> Option<Vec2> {
+    // Determine if the x is in range of this foothold
+    if foothold.get_x_in_range(current.x) && foothold.get_x_in_range(next.x) {
+        // Get the foothold y position for current and next points
+        if let (Some(current_fh_y), Some(next_fh_y)) =
+            (foothold.get_y_at_x(current.x), foothold.get_y_at_x(next.x))
+        {
+            // Important: Use this threshold to check for realistic changes in y
+            if (current_fh_y - next_fh_y).abs() < COLLISION_THRESHOLD {
+                if current.y >= current_fh_y && next.y <= next_fh_y {
+                    return Some(Vec2::new(next.x, next_fh_y));
+                }
+            }
+        }
+    }
+    None
 }
 
 /// Provide an anchor point for the quad
