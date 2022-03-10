@@ -1,15 +1,18 @@
 use bevy::prelude::*;
 
+// RigidBody Input
+pub const MOVEMENT_SPEED: f32 = 2.0;
+pub const JUMP_FORCE: f32 = 5.0;
+
 // Horizontal constants
-pub const MOVEMENT_SPEED: f32 = 1.0;
-pub const MAX_MOVEMENT_SPEED: f32 = 2.0;
+pub const MAX_MOVEMENT_SPEED: f32 = 3.0;
 pub const MOVEMENT_FRICTION: f32 = -0.2;
 
 // Vertical constants
-pub const JUMP_FORCE: f32 = 4.0;
-pub const MAX_JUMP_SPEED: f32 = 4.0;
-pub const GRAVITY: f32 = -1.0;
-pub const MAX_FALL_SPEED: f32 = -2.0;
+pub const GRAVITY: f32 = -1.5;
+pub const MAX_ACCELERATION: f32 = 5.0;
+pub const MAX_VELOCITY_DOWN: f32 = -4.0;
+pub const MAX_VELOCITY_UP: f32 = 5.0;
 
 /// Represents rigid body properties.
 #[derive(Component, Default)]
@@ -34,11 +37,15 @@ impl Plugin for RigidBodyPlugin {
 /// * `rigid_bodies`: Rigid body components.
 pub fn rigid_body_system(mut rigid_bodies: Query<&mut RigidBody>) {
     for mut body in rigid_bodies.iter_mut() {
-        body.acceleration.y = clamp::clamp(GRAVITY, body.acceleration.y + GRAVITY, JUMP_FORCE);
+        body.acceleration.y = clamp::clamp(
+            -MAX_ACCELERATION,
+            body.acceleration.y + GRAVITY,
+            MAX_ACCELERATION,
+        );
         body.velocity.y = clamp::clamp(
-            MAX_FALL_SPEED,
+            MAX_VELOCITY_DOWN,
             body.velocity.y + body.acceleration.y,
-            MAX_JUMP_SPEED,
+            MAX_VELOCITY_UP,
         );
 
         body.acceleration.x += body.velocity.x * MOVEMENT_FRICTION;
