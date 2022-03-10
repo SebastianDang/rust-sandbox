@@ -70,10 +70,41 @@ impl Foothold {
 
             // Check if 2 points contain x
             if x >= p1.x && x <= p2.x {
-                // Calculate the slope of the line
                 let slope = (p2.y - p1.y) / (p2.x - p1.x);
                 let y = p2.y + ((x - p2.x) * slope);
                 return Some(y);
+            }
+        }
+        None
+    }
+
+    /// Gets the angle if x is within the range of points of this foothold.
+    /// Returns the angle in degrees.
+    ///
+    /// # Arguments
+    ///
+    /// * `x`: The value to evaluate for y.
+    ///
+    /// # Examples
+    /// ```
+    /// match foothold.get_angle_at_x(5.0) {
+    ///     Some(angle) => { println!("{}", angle) },
+    ///     None => { },
+    /// };
+    /// ```
+    pub fn get_angle_at_x(&self, x: f32) -> Option<f32> {
+        let points = &self.points;
+
+        // Loop through each pair of points
+        for it in 1..points.len() {
+            let p1 = points[it - 1];
+            let p2 = points[it];
+
+            // Check if 2 points contain x
+            if x >= p1.x && x <= p2.x {
+                let slope = (p2.y - p1.y) / (p2.x - p1.x);
+                let angle = slope.atan().to_degrees();
+                return Some(angle);
             }
         }
         None
