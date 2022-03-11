@@ -45,13 +45,13 @@ const COLLISION_THRESHOLD: f32 = 4.0;
 
 fn player_collider_system(
     mut commands: Commands,
-    mut player: Query<(Entity, &mut Quad2d, &RigidBody, Option<&FootholdLayer>), With<Player>>,
+    mut player: Query<(Entity, &mut Quad2d, &mut RigidBody, Option<&FootholdLayer>), With<Player>>,
     mut footholds: Query<(&Foothold, &FootholdLayer), (With<Foothold>, With<FootholdLayer>)>,
 ) {
     if player.is_empty() {
         return;
     }
-    let (entity, mut current, body, layer) = player.single_mut();
+    let (entity, mut current, mut body, layer) = player.single_mut();
 
     // Calculate the next position
     let mut next = current.clone();
@@ -95,6 +95,13 @@ fn player_collider_system(
             {
                 quad_set_pos_from_anchor_point(&mut next, None, Some(collision.y));
                 commands.entity(entity).insert(foothold_layer.clone());
+
+                // Apply angular force
+                let angle = calculate_fh_angle(foothold, next.position);
+                if angle != 0.0 {
+                    body.acceleration.x += GRAVITY / angle.tan();
+                    body.acceleration.y += GRAVITY;
+                }
             }
         }
     }
