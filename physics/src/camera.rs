@@ -1,7 +1,18 @@
 use bevy::prelude::*;
 
-#[derive(Component)]
-pub struct MainCamera;
+use super::player::*;
+
+pub fn new_cursor_camera(mut commands: Commands) {
+    commands
+        .spawn_bundle(OrthographicCameraBundle::new_2d())
+        .insert(CameraCursor2d::default());
+}
+
+pub fn new_player_follow_camera(mut commands: Commands) {
+    commands
+        .spawn_bundle(OrthographicCameraBundle::new_2d())
+        .insert(CameraFollowConfig::default());
+}
 
 #[derive(Component)]
 pub struct CameraCursor2d {
@@ -16,11 +27,15 @@ impl Default for CameraCursor2d {
     }
 }
 
-pub fn new_main_camera(mut commands: Commands) {
-    commands
-        .spawn_bundle(OrthographicCameraBundle::new_2d())
-        .insert(MainCamera)
-        .insert(CameraCursor2d::default());
+#[derive(Component)]
+pub struct CameraFollowConfig {
+    pub threshold: f32,
+}
+
+impl Default for CameraFollowConfig {
+    fn default() -> Self {
+        Self { threshold: 20.0 }
+    }
 }
 
 #[derive(Default)]
@@ -28,26 +43,27 @@ pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(track_cursor_system);
+        app.add_system(track_cursor_system)
+            .add_system(follow_player_system);
     }
 }
 
 fn track_cursor_system(
     windows: Res<Windows>,
-    main_camera: Query<(&Camera, &Transform), With<MainCamera>>,
-    mut main_camera_state: Query<&mut CameraCursor2d, With<MainCamera>>,
+    cameras: Query<(&Camera, &Transform), With<CameraCursor2d>>,
+    mut camera_states: Query<&mut CameraCursor2d, With<CameraCursor2d>>,
 ) {
     // check if main camera exists
-    if main_camera.is_empty() || main_camera_state.is_empty() {
+    if cameras.is_empty() || camera_states.is_empty() {
         return;
     }
 
     // get the camera info and transform
     // assuming there is exactly one main camera entity, so query::single() is OK
-    let (camera, camera_transform) = main_camera.single();
+    let (camera, camera_transform) = cameras.single();
 
     // get the camera state
-    let mut state = main_camera_state.single_mut();
+    let mut state = camera_states.single_mut();
 
     // get the window that the camera is displaying to
     let window = windows.get(camera.window).unwrap();
@@ -72,5 +88,32 @@ fn track_cursor_system(
         // Update state
         state.world_pos = world_pos;
         // eprintln!("world coordinates: {} {}", world_pos.x, world_pos.y);
+    }
+}
+
+fn follow_player_system(
+    time: Res<Time>,
+    players: Query<&GlobalTransform, With<Player>>,
+    mut query: Query<(&mut Transform, &CameraFollowConfig)>,
+) {
+    if players.is_empty() {
+        return;
+    }
+
+    let player = players.single();
+    let player_transform = player.translation;
+    let target = Vec2::new(player_transform.x, player_transform.y);
+
+    for (mut transform, config) in query.iter_mut() {
+        let source = Vec2::new(transform.translation.x, transform.translation.y);
+
+        let dist = target - source;
+        if dist.length() < config.threshold {
+            continue;
+        }
+
+        let speed = dist * (dist.length() - config.threshold) / dist.length();
+        let velocity = speed * time.delta_seconds();
+        transform.translation += Vec3::new(velocity.x, velocity.y, 0.0);
     }
 }

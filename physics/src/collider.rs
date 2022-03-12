@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use bevy::math::Vec2;
 
-use super::geometry::*;
+use super::{line::*, quad::*};
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Collision {

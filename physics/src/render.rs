@@ -1,9 +1,7 @@
 use bevy::prelude::*;
 use bevy_prototype_debug_lines::*;
 
-use crate::foothold::Foothold;
-
-use super::geometry::*;
+use super::{foothold::*, line::*, quad::*};
 
 const DEFAULT_COLOR: Color = Color::BEIGE;
 // const DEFAULT_PALETTE: [Color; 10] = [

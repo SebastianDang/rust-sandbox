@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{foothold::*, geometry::*, rigid_body::*};
+use crate::{foothold::*, quad::*, rigid_body::*};
 
 #[derive(Clone, Component, Debug)]
 pub struct Player;
@@ -11,8 +11,8 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_system(player_movement_system)
-            .add_system(player_collider_system);
-        // .add_system(player_slope_system);
+            .add_system(player_collider_system)
+            .add_system(player_transform_sync_system);
     }
 }
 
@@ -108,6 +108,17 @@ fn player_collider_system(
 
     // Finally, update the player's position
     current.position = next.position;
+}
+
+fn player_transform_sync_system(mut players: Query<(&mut GlobalTransform, &Quad2d), With<Player>>) {
+    for (mut transform, quad) in players.iter_mut() {
+        if transform.translation.x != quad.position.x {
+            transform.translation.x = quad.position.x;
+        }
+        if transform.translation.y != quad.position.y {
+            transform.translation.y = quad.position.y;
+        }
+    }
 }
 
 /// Calculate any collisions for a foothold, using the current and next points

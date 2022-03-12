@@ -1,25 +1,22 @@
 use bevy::prelude::*;
 
 mod camera;
-use camera::*;
-
-mod geometry;
-use geometry::*;
-
 mod collider;
-use collider::*;
-
-mod render;
-use render::*;
-
 mod foothold;
-use foothold::*;
-
-mod rigid_body;
-use rigid_body::*;
-
+mod line;
 mod player;
+mod quad;
+mod render;
+mod rigid_body;
+
+use camera::*;
+use collider::*;
+use foothold::*;
+use line::*;
 use player::*;
+use quad::*;
+use render::*;
+use rigid_body::*;
 
 fn main() {
     App::new()
@@ -29,7 +26,7 @@ fn main() {
         .add_plugin(RigidBodyPlugin)
         .add_plugin(PlayerPlugin)
         .add_startup_system(setup)
-        .add_startup_system(new_main_camera)
+        .add_startup_system(new_player_follow_camera)
         .run();
 }
 
@@ -69,6 +66,7 @@ fn setup(mut commands: Commands) {
     commands
         .spawn()
         .insert(Player)
+        .insert(GlobalTransform::default())
         .insert(Quad2d::new(0.0, 100.0, 20.0, 40.0))
         .insert(RenderColor::default())
         .insert(RigidBody::default());
