@@ -110,7 +110,12 @@ fn player_collider_system(
     current.position = next.position;
 }
 
-fn player_transform_sync_system(mut players: Query<(&mut GlobalTransform, &Quad2d), With<Player>>) {
+fn player_transform_sync_system(
+    mut players: Query<
+        (&mut GlobalTransform, &Quad2d),
+        (With<GlobalTransform>, With<Quad2d>, With<Player>),
+    >,
+) {
     for (mut transform, quad) in players.iter_mut() {
         if transform.translation.x != quad.position.x {
             transform.translation.x = quad.position.x;

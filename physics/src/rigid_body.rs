@@ -35,7 +35,7 @@ impl Plugin for RigidBodyPlugin {
 /// # Arguments
 ///
 /// * `rigid_bodies`: Rigid body components.
-pub fn rigid_body_system(mut rigid_bodies: Query<&mut RigidBody>) {
+pub fn rigid_body_system(mut rigid_bodies: Query<&mut RigidBody, With<RigidBody>>) {
     for mut body in rigid_bodies.iter_mut() {
         body.acceleration.y = clamp::clamp(
             -MAX_ACCELERATION,
