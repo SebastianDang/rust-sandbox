@@ -5,25 +5,49 @@ use crate::{foothold::*, quad::*, rigid_body::*};
 #[derive(Clone, Component, Debug)]
 pub struct Player;
 
+#[derive(Clone, Component, Debug)]
+pub struct PlayerState {
+    ground: bool,
+}
+
 /// Plugin for players.
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
+        app.add_system(player_transform_sync_system);
         app.add_system(player_movement_system)
-            .add_system(player_collider_system)
-            .add_system(player_transform_sync_system);
+            .add_system(player_collider_system);
+    }
+}
+
+fn player_transform_sync_system(
+    mut players: Query<
+        (&mut GlobalTransform, &Quad2d),
+        (With<GlobalTransform>, With<Quad2d>, With<Player>),
+    >,
+) {
+    for (mut transform, quad) in players.iter_mut() {
+        if transform.translation.x != quad.position.x {
+            transform.translation.x = quad.position.x;
+        }
+        if transform.translation.y != quad.position.y {
+            transform.translation.y = quad.position.y;
+        }
     }
 }
 
 fn player_movement_system(
     keyboard_input: Res<Input<KeyCode>>,
-    mut player: Query<&mut RigidBody, With<Player>>,
+    mut player: Query<
+        (&mut PlayerState, &mut RigidBody),
+        (With<PlayerState>, With<RigidBody>, With<Player>),
+    >,
 ) {
     if player.is_empty() {
         return;
     }
-    let mut body = player.single_mut();
+    let (mut state, mut body) = player.single_mut();
 
     if keyboard_input.pressed(KeyCode::Left) {
         body.acceleration.x = -MOVEMENT_SPEED;
@@ -36,7 +60,8 @@ fn player_movement_system(
         body.acceleration.x = 0.0;
     }
 
-    if keyboard_input.pressed(KeyCode::LAlt) {
+    if keyboard_input.pressed(KeyCode::LAlt) && state.ground {
+        state.ground = false;
         body.acceleration.y = JUMP_FORCE;
     }
 }
@@ -45,13 +70,27 @@ const COLLISION_THRESHOLD: f32 = 4.0;
 
 fn player_collider_system(
     mut commands: Commands,
-    mut player: Query<(Entity, &mut Quad2d, &mut RigidBody, Option<&FootholdLayer>), With<Player>>,
+    mut player: Query<
+        (
+            Entity,
+            &mut PlayerState,
+            &mut Quad2d,
+            &mut RigidBody,
+            Option<&FootholdLayer>,
+        ),
+        (
+            With<PlayerState>,
+            With<Quad2d>,
+            With<RigidBody>,
+            With<Player>,
+        ),
+    >,
     mut footholds: Query<(&Foothold, &FootholdLayer), (With<Foothold>, With<FootholdLayer>)>,
 ) {
     if player.is_empty() {
         return;
     }
-    let (entity, mut current, mut body, layer) = player.single_mut();
+    let (entity, mut state, mut current, mut body, layer) = player.single_mut();
 
     // Calculate the next position
     let mut next = current.clone();
@@ -76,6 +115,7 @@ fn player_collider_system(
         {
             if let Some(collision) = calculate_fh_collision(&foothold, current_anchor, next_anchor)
             {
+                state.ground = true;
                 quad_set_pos_from_anchor_point(&mut next, None, Some(collision.y));
                 collisions += 1; // Collision found in this layer
             }
@@ -93,7 +133,9 @@ fn player_collider_system(
         for (foothold, foothold_layer) in footholds.iter_mut() {
             if let Some(collision) = calculate_fh_collision(&foothold, current_anchor, next_anchor)
             {
+                state.ground = true;
                 quad_set_pos_from_anchor_point(&mut next, None, Some(collision.y));
+
                 commands.entity(entity).insert(foothold_layer.clone());
 
                 // Apply angular force
@@ -108,22 +150,6 @@ fn player_collider_system(
 
     // Finally, update the player's position
     current.position = next.position;
-}
-
-fn player_transform_sync_system(
-    mut players: Query<
-        (&mut GlobalTransform, &Quad2d),
-        (With<GlobalTransform>, With<Quad2d>, With<Player>),
-    >,
-) {
-    for (mut transform, quad) in players.iter_mut() {
-        if transform.translation.x != quad.position.x {
-            transform.translation.x = quad.position.x;
-        }
-        if transform.translation.y != quad.position.y {
-            transform.translation.y = quad.position.y;
-        }
-    }
 }
 
 /// Calculate any collisions for a foothold, using the current and next points
