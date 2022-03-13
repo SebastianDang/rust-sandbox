@@ -1,6 +1,17 @@
 use bevy::prelude::*;
 
-use crate::{foothold::*, quad::*, rigid_body::*};
+use crate::{foothold::*, quad::*, render::*, rigid_body::*};
+
+pub fn spawn_player(mut commands: Commands) {
+    commands
+        .spawn()
+        .insert(PlayerState::default())
+        .insert(Quad2d::new(0.0, 100.0, 20.0, 40.0))
+        .insert(GlobalTransform::default())
+        .insert(RigidBody::default())
+        .insert(RenderColor::default())
+        .insert(Player);
+}
 
 #[derive(Clone, Component, Debug)]
 pub struct Player;
@@ -113,7 +124,8 @@ fn player_collider_system(
             .iter_mut()
             .filter(|(_, foothold_layer)| foothold_layer.0 == layer.0)
         {
-            if let Some(collision) = calculate_fh_collision(&foothold, current_anchor, next_anchor)
+            if let Some(collision) =
+                calculate_fh_collision(&foothold, &foothold, current_anchor, next_anchor)
             {
                 state.ground = true;
                 quad_set_pos_from_anchor_point(&mut next, None, Some(collision.y));
@@ -131,7 +143,8 @@ fn player_collider_system(
     if collisions == 0 {
         // Foothold collision logic
         for (foothold, foothold_layer) in footholds.iter_mut() {
-            if let Some(collision) = calculate_fh_collision(&foothold, current_anchor, next_anchor)
+            if let Some(collision) =
+                calculate_fh_collision(&foothold, &foothold, current_anchor, next_anchor)
             {
                 state.ground = true;
                 quad_set_pos_from_anchor_point(&mut next, None, Some(collision.y));
@@ -153,10 +166,15 @@ fn player_collider_system(
 }
 
 /// Calculate any collisions for a foothold, using the current and next points
-fn calculate_fh_collision(foothold: &Foothold, current: Vec2, next: Vec2) -> Option<Vec2> {
+fn calculate_fh_collision(
+    current_fh: &Foothold,
+    next_fh: &Foothold,
+    current: Vec2,
+    next: Vec2,
+) -> Option<Vec2> {
     // Get the foothold y position for current and next points
     if let (Some(current_fh_y), Some(next_fh_y)) =
-        (foothold.get_y_at_x(current.x), foothold.get_y_at_x(next.x))
+        (current_fh.get_y_at_x(current.x), next_fh.get_y_at_x(next.x))
     {
         // Important: Use this threshold to check for realistic changes in y
         if (current_fh_y - next_fh_y).abs() < COLLISION_THRESHOLD {

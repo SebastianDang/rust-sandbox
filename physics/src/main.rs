@@ -62,15 +62,7 @@ fn setup(mut commands: Commands) {
     spawn_foothold_from_points(&mut commands, &layer_0, 0);
     spawn_foothold_from_points(&mut commands, &layer_1, 1);
     spawn_foothold_from_points(&mut commands, &layer_2, 2);
-
-    commands
-        .spawn()
-        .insert(Player)
-        .insert(PlayerState::default)
-        .insert(GlobalTransform::default())
-        .insert(Quad2d::new(0.0, 100.0, 20.0, 40.0))
-        .insert(RenderColor::default())
-        .insert(RigidBody::default());
+    spawn_player(commands);
 }
 
 fn spawn_foothold_from_points(commands: &mut Commands, points: &[Vec2], layer: u32) {
