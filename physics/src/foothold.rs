@@ -27,26 +27,6 @@ impl Foothold {
         }
     }
 
-    /// Determines if x within the range of points of this foothold.
-    ///
-    /// # Arguments
-    ///
-    /// * `x`: The value to find.
-    ///
-    /// # Examples
-    /// ```
-    /// let in_range = foothold.get_x_in_range(5.0);
-    /// ```
-    pub fn get_x_in_range(&self, x: f32) -> bool {
-        let points = &self.points;
-        for it in 1..points.len() {
-            if x >= points[it - 1].x && x <= points[it].x {
-                return true;
-            }
-        }
-        false
-    }
-
     /// Gets the y coordinate if x is within the range of points of this foothold.
     ///
     /// # Arguments
