@@ -37,22 +37,22 @@ impl Plugin for RigidBodyPlugin {
 /// * `rigid_bodies`: Rigid body components.
 pub fn rigid_body_system(mut rigid_bodies: Query<&mut RigidBody, With<RigidBody>>) {
     for mut body in rigid_bodies.iter_mut() {
-        body.acceleration.y = clamp::clamp(
-            -MAX_ACCELERATION,
-            body.acceleration.y + GRAVITY,
-            MAX_ACCELERATION,
-        );
-        body.velocity.y = clamp::clamp(
-            MAX_VELOCITY_DOWN,
-            body.velocity.y + body.acceleration.y,
-            MAX_VELOCITY_UP,
-        );
+        body.acceleration.y =
+            (body.acceleration.y + GRAVITY).clamp(-MAX_ACCELERATION, MAX_ACCELERATION);
+        body.velocity.y =
+            (body.velocity.y + body.acceleration.y).clamp(MAX_VELOCITY_DOWN, MAX_VELOCITY_UP);
 
-        body.acceleration.x += body.velocity.x * MOVEMENT_FRICTION;
-        body.velocity.x = clamp::clamp(
-            -MAX_MOVEMENT_SPEED,
-            body.velocity.x + body.acceleration.x,
-            MAX_MOVEMENT_SPEED,
-        );
+        // Because this force is updated due to friction, we want to make sure it reaches 0.
+        body.acceleration.x += round_to_zero(body.velocity.x * MOVEMENT_FRICTION);
+        body.velocity.x =
+            (body.velocity.x + body.acceleration.x).clamp(-MAX_MOVEMENT_SPEED, MAX_MOVEMENT_SPEED);
+    }
+}
+
+fn round_to_zero(val: f32) -> f32 {
+    if val.abs() < 0.01 {
+        0.0
+    } else {
+        val
     }
 }
