@@ -15,7 +15,7 @@ pub const MAX_VELOCITY_DOWN: f32 = -0.5;
 pub const MAX_VELOCITY_UP: f32 = 0.5;
 
 /// Represents rigid body properties.
-#[derive(Component, Default)]
+#[derive(Component, Debug, Default)]
 pub struct RigidBody {
     pub velocity: Vec2,
     pub acceleration: Vec2,

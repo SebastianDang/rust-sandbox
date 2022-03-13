@@ -5,7 +5,7 @@ use crate::{foothold::*, quad::*, rigid_body::*};
 #[derive(Clone, Component, Debug)]
 pub struct Player;
 
-#[derive(Clone, Component, Debug)]
+#[derive(Clone, Component, Debug, Default)]
 pub struct PlayerState {
     ground: bool,
 }

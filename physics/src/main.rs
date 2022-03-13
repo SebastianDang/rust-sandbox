@@ -66,6 +66,7 @@ fn setup(mut commands: Commands) {
     commands
         .spawn()
         .insert(Player)
+        .insert(PlayerState::default)
         .insert(GlobalTransform::default())
         .insert(Quad2d::new(0.0, 100.0, 20.0, 40.0))
         .insert(RenderColor::default())
