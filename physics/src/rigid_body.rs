@@ -1,18 +1,18 @@
 use bevy::prelude::*;
 
 // RigidBody Input
-pub const MOVEMENT_SPEED: f32 = 2.0;
-pub const JUMP_FORCE: f32 = 5.0;
+pub const MOVEMENT_SPEED: f32 = 1.5;
+pub const JUMP_FORCE: f32 = 20.0;
 
 // Horizontal constants
-pub const MAX_MOVEMENT_SPEED: f32 = 3.0;
+pub const MAX_MOVEMENT_SPEED: f32 = 1.0;
 pub const MOVEMENT_FRICTION: f32 = -0.2;
 
 // Vertical constants
-pub const GRAVITY: f32 = -1.5;
-pub const MAX_ACCELERATION: f32 = 5.0;
-pub const MAX_VELOCITY_DOWN: f32 = -4.0;
-pub const MAX_VELOCITY_UP: f32 = 5.0;
+pub const GRAVITY: f32 = -0.4;
+pub const MAX_ACCELERATION: f32 = 10.0;
+pub const MAX_VELOCITY_DOWN: f32 = -0.5;
+pub const MAX_VELOCITY_UP: f32 = 0.5;
 
 /// Represents rigid body properties.
 #[derive(Component, Default)]
