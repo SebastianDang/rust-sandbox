@@ -23,7 +23,7 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..Default::default()
         })
         .insert(Player)
-        .insert(RenderColor::with_id(1));
+        .insert(RenderColor::default());
 }
 
 fn player_movement_system(

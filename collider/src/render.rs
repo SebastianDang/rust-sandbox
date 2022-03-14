@@ -46,7 +46,7 @@ const DEFAULT_PALETTE: [Color; 37] = [
 
 #[derive(Copy, Clone, Component)]
 pub struct RenderColor {
-    color: Color,
+    pub color: Color,
 }
 
 impl Default for RenderColor {
@@ -71,32 +71,20 @@ pub struct RenderPlugin;
 impl Plugin for RenderPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugin(DebugLinesPlugin::default())
-            .add_system(render_footholds_system)
-            .add_system(render_sprites_system);
-    }
-}
-
-fn render_footholds_system(
-    mut debug_lines: ResMut<DebugLines>,
-    lines: Query<(&Foothold, &RenderColor), (With<Foothold>, With<RenderColor>)>,
-) {
-    for (foothold, render_color) in lines.iter() {
-        let color = render_color.color;
-        let p1 = Vec3::new(foothold.x1, foothold.y1, 0.0);
-        let p2 = Vec3::new(foothold.x2, foothold.y2, 0.0);
-        debug_lines.line_colored(p1, p2, 0., color);
+            .add_system(render_sprites_system)
+            .add_system(render_footholds_system);
     }
 }
 
 fn render_sprites_system(
     mut debug_lines: ResMut<DebugLines>,
     images: Res<Assets<Image>>,
-    lines: Query<
+    sprites: Query<
         (&Transform, &Handle<Image>, &RenderColor),
         (With<Transform>, With<Sprite>, With<RenderColor>),
     >,
 ) {
-    for (transform, texture, render_color) in lines.iter() {
+    for (transform, texture, render_color) in sprites.iter() {
         let position = transform.translation;
         let color = render_color.color;
 
@@ -114,5 +102,17 @@ fn render_sprites_system(
             debug_lines.line_colored(top_right, bottom_right, 0., color);
             debug_lines.line_colored(bottom_left, bottom_right, 0., color);
         }
+    }
+}
+
+fn render_footholds_system(
+    mut debug_lines: ResMut<DebugLines>,
+    footholds: Query<(&Foothold, &RenderColor), (With<Foothold>, With<RenderColor>)>,
+) {
+    for (foothold, render_color) in footholds.iter() {
+        let color = render_color.color;
+        let p1 = Vec3::new(foothold.x1, foothold.y1, 0.0);
+        let p2 = Vec3::new(foothold.x2, foothold.y2, 0.0);
+        debug_lines.line_colored(p1, p2, 0., color);
     }
 }

@@ -7,6 +7,7 @@ fn main() {
         .add_plugin(CameraPlugin)
         .add_plugin(RenderPlugin)
         .add_plugin(PlayerPlugin)
+        .add_plugin(CollisionPlugin)
         .add_startup_system(setup)
         .add_startup_system(new_player_follow_camera)
         .run();
@@ -38,6 +39,6 @@ fn setup(mut commands: Commands) {
         commands
             .spawn()
             .insert(foothold)
-            .insert(RenderColor::with_id(rand::random()));
+            .insert(RenderColor::from(Color::WHITE));
     }
 }
