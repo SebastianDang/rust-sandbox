@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{core::FixedTimestep, prelude::*};
 
 // RigidBody Input
 pub const MOVEMENT_SPEED: f32 = 1.5;
@@ -14,6 +14,9 @@ pub const MAX_ACCELERATION: f32 = 10.0;
 pub const MAX_VELOCITY_DOWN: f32 = -0.5;
 pub const MAX_VELOCITY_UP: f32 = 0.5;
 
+const TIMESTEP_60_FRAMES_PER_SECOND: f64 = 1.0 / 60.0;
+const TIMESTEP_LABEL: &str = "rigid_body_timestep";
+
 /// Represents rigid body properties.
 #[derive(Component, Debug, Default)]
 pub struct RigidBody {
@@ -26,7 +29,13 @@ pub struct RigidBodyPlugin;
 
 impl Plugin for RigidBodyPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_system(rigid_body_system);
+        app.add_system_set(
+            SystemSet::new()
+                .with_run_criteria(
+                    FixedTimestep::step(TIMESTEP_60_FRAMES_PER_SECOND).with_label(TIMESTEP_LABEL),
+                )
+                .with_system(rigid_body_system),
+        );
     }
 }
 

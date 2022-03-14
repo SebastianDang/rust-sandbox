@@ -1,6 +1,9 @@
-use bevy::prelude::*;
+use bevy::{core::FixedTimestep, prelude::*};
 
 use crate::{foothold::*, quad::*, render::*, rigid_body::*};
+
+const TIMESTEP_60_FRAMES_PER_SECOND: f64 = 1.0 / 60.0;
+const TIMESTEP_LABEL: &str = "player_timestep";
 
 pub fn spawn_player(mut commands: Commands) {
     commands
@@ -27,8 +30,15 @@ pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_system(player_transform_sync_system);
-        app.add_system(player_movement_system)
-            .add_system(player_collider_system);
+        app.add_system(player_movement_system);
+
+        app.add_system_set(
+            SystemSet::new()
+                .with_run_criteria(
+                    FixedTimestep::step(TIMESTEP_60_FRAMES_PER_SECOND).with_label(TIMESTEP_LABEL),
+                )
+                .with_system(player_collider_system),
+        );
     }
 }
 
