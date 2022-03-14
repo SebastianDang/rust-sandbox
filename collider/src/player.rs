@@ -28,18 +28,20 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn player_movement_system(
     keyboard_input: Res<Input<KeyCode>>,
-    mut player: Query<&mut Transform, With<Player>>,
+    mut player: Query<(&mut Transform, &mut Sprite), (With<Transform>, With<Sprite>, With<Player>)>,
 ) {
     if player.is_empty() {
         return;
     }
-    let mut transform = player.single_mut();
+    let (mut transform, mut sprite) = player.single_mut();
 
     if keyboard_input.pressed(KeyCode::Left) {
         transform.translation.x -= 1.0;
+        sprite.flip_x = false;
     }
     if keyboard_input.pressed(KeyCode::Right) {
         transform.translation.x += 1.0;
+        sprite.flip_x = true;
     }
     if keyboard_input.pressed(KeyCode::Up) {
         transform.translation.y += 1.0;

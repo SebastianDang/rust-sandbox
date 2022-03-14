@@ -1,14 +1,5 @@
 use bevy::prelude::*;
-
-mod camera;
-mod foothold;
-mod player;
-mod render;
-
-use camera::*;
-use foothold::*;
-use player::*;
-use render::*;
+use collider::*;
 
 fn main() {
     App::new()
@@ -22,12 +13,18 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    let points: [Vec2; 5] = [
+    let points: [Vec2; 11] = [
+        Vec2::new(-500.0, 0.0),
+        Vec2::new(-400.0, 25.0),
+        Vec2::new(-300.0, 25.0),
+        Vec2::new(-200.0, 0.0),
         Vec2::new(-100.0, 0.0),
-        Vec2::new(-50.0, 0.0),
-        Vec2::new(0.0, 0.0),
-        Vec2::new(50.0, 0.0),
-        Vec2::new(100.0, 0.0),
+        Vec2::new(0.0, 25.0),
+        Vec2::new(100.0, 50.0),
+        Vec2::new(200.0, 50.0),
+        Vec2::new(300.0, 25.0),
+        Vec2::new(400.0, 0.0),
+        Vec2::new(500.0, 0.0),
     ];
 
     for it in 1..points.len() {
