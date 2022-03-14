@@ -35,7 +35,7 @@ impl Plugin for PlayerPlugin {
 fn player_transform_sync_system(
     mut players: Query<
         (&mut GlobalTransform, &Quad2d),
-        (With<GlobalTransform>, With<Quad2d>, With<Player>),
+        (With<GlobalTransform>, Changed<Quad2d>, With<Player>),
     >,
 ) {
     for (mut transform, quad) in players.iter_mut() {
@@ -161,8 +161,10 @@ fn player_collider_system(
         }
     }
 
-    // Finally, update the player's position
-    current.position = next.position;
+    // Finally, update the player's position (Only update if changed)
+    if current.position != next.position {
+        current.position = next.position;
+    }
 }
 
 /// Calculate any collisions for a foothold, using the current and next points
