@@ -7,5 +7,4 @@ edition = "2021"
 
 [dependencies]
 bevy = "*"
-clamp = "*"
 bevy_prototype_debug_lines = "*"

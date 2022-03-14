@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_prototype_debug_lines::*;
 
-use super::geometry::*;
+use super::{foothold::*, line::*, quad::*};
 
 const DEFAULT_COLOR: Color = Color::BEIGE;
 // const DEFAULT_PALETTE: [Color; 10] = [
@@ -45,7 +45,8 @@ impl Plugin for RenderPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugin(DebugLinesPlugin::default())
             .add_system(render_lines_system)
-            .add_system(render_quads_system);
+            .add_system(render_quads_system)
+            .add_system(render_footholds_system);
     }
 }
 
@@ -69,5 +70,20 @@ fn render_quads_system(mut debug_lines: ResMut<DebugLines>, quads: Query<(&Quad2
         debug_lines.line_colored(top_left, bottom_left, 0., color);
         debug_lines.line_colored(bottom_right, top_right, 0., color);
         debug_lines.line_colored(bottom_right, bottom_left, 0., color);
+    }
+}
+
+fn render_footholds_system(
+    mut debug_lines: ResMut<DebugLines>,
+    lines: Query<(&Foothold, &RenderColor)>,
+) {
+    for (foothold, render_color) in lines.iter() {
+        let color = render_color.color;
+        let points = &foothold.points;
+        for it in 1..points.len() {
+            let p1 = points[it - 1];
+            let p2 = points[it];
+            debug_lines.line_colored(p1.extend(0.0), p2.extend(0.0), 0., color);
+        }
     }
 }
