@@ -80,6 +80,9 @@ fn player_foothold_collision_system(
         let half_width = width / 2.0;
         let half_height = height / 2.0;
 
+        // Determine if we need to perform collision detection
+        let mut use_collision = false;
+
         // Footold exists: check nodes and update
         if foothold_id.is_some() {
             let curr = foothold_id.unwrap().0;
@@ -102,35 +105,29 @@ fn player_foothold_collision_system(
                 } else {
                     println!("fh({}): removed", foothold.id);
                     commands.entity(entity).remove::<FootholdId>();
+                    use_collision = true;
                 }
             }
+        } else {
+            use_collision = true;
         }
+
         // Foothold doesn't exist: check for new collisions
-        else {
+        if use_collision {
             for foothold in footholds.iter() {
                 let collisions = collide_sprite_foothold(&position, width, height, foothold);
-
-                // Flat ground
-                if collisions.contains_key(&CollisionType::Left)
-                    && !collisions.contains_key(&CollisionType::Bottom)
-                    && collisions.contains_key(&CollisionType::Right)
-                {
-                    if let Some(_) = foothold.get_y_at_x(position.x) {
-                        println!("fh({}): added", foothold.id);
-                        commands.entity(entity).insert(FootholdId(foothold.id));
-                        // position_limit_ground_y(&mut (transform.translation), height, y);
-                    }
-                }
 
                 // Left slope
                 if collisions.contains_key(&CollisionType::Left)
                     && collisions.contains_key(&CollisionType::Bottom)
                     && !collisions.contains_key(&CollisionType::Right)
                 {
-                    if let Some(_) = foothold.get_y_at_x(position.x - half_width) {
-                        println!("fh({}): added", foothold.id);
-                        commands.entity(entity).insert(FootholdId(foothold.id));
-                        // position_limit_ground_y(&mut (transform.translation), height, y);
+                    if let Some(y) = foothold.get_y_at_x(position.x - half_width) {
+                        if (position.y - half_height - y).abs() < 5.0 {
+                            println!("fh({}): added", foothold.id);
+                            commands.entity(entity).insert(FootholdId(foothold.id));
+                            // position_limit_ground_y(&mut (transform.translation), height, y);
+                        }
                     }
                 }
 
@@ -139,20 +136,28 @@ fn player_foothold_collision_system(
                     && collisions.contains_key(&CollisionType::Right)
                     && collisions.contains_key(&CollisionType::Bottom)
                 {
-                    if let Some(_) = foothold.get_y_at_x(position.x + half_width) {
-                        println!("fh({}): added", foothold.id);
-                        commands.entity(entity).insert(FootholdId(foothold.id));
-                        // position_limit_ground_y(&mut (transform.translation), height, y);
+                    if let Some(y) = foothold.get_y_at_x(position.x + half_width) {
+                        if (position.y - half_height - y).abs() < 5.0 {
+                            println!("fh({}): added", foothold.id);
+                            commands.entity(entity).insert(FootholdId(foothold.id));
+                            // position_limit_ground_y(&mut (transform.translation), height, y);
+                        }
                     }
                 }
 
-                // if let Some(y) = foothold.get_y_at_x(position.x) {
-                //     if position.y > y && position.y - half_height <= y {
-                //         println!("fh({}): added", foothold.id);
-                //         commands.entity(entity).insert(FootholdId(foothold.id));
-                //         position_limit_ground_y(&mut (transform.translation), height, y);
-                //     }
-                // }
+                // Flat ground
+                if collisions.contains_key(&CollisionType::Left)
+                    && !collisions.contains_key(&CollisionType::Bottom)
+                    && collisions.contains_key(&CollisionType::Right)
+                {
+                    if let Some(y) = foothold.get_y_at_x(position.x) {
+                        if (position.y - half_height - y).abs() < 5.0 {
+                            println!("fh({}): added", foothold.id);
+                            commands.entity(entity).insert(FootholdId(foothold.id));
+                            // position_limit_ground_y(&mut (transform.translation), height, y);
+                        }
+                    }
+                }
             }
         }
     }
