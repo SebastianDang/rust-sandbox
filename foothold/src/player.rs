@@ -9,6 +9,8 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugin(RigidBodyPlugin);
+
         app.add_startup_system(spawn_player);
         app.add_system(player_movement_system)
             .add_system(player_foothold_collision_system);
@@ -20,40 +22,39 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands
         .spawn_bundle(SpriteBundle {
+            transform: Transform::from_xyz(0.0, 200.0, 0.0),
             texture,
             ..Default::default()
         })
         .insert(Player)
+        .insert(RigidBody::default())
         .insert(RenderColor::default());
 }
 
 fn player_movement_system(
     mut commands: Commands,
     keyboard_input: Res<Input<KeyCode>>,
-    mut player: Query<
-        (Entity, &mut Transform, &mut Sprite),
-        (With<Transform>, With<Sprite>, With<Player>),
-    >,
+    mut player: Query<(Entity, &mut RigidBody), (With<RigidBody>, With<Player>)>,
 ) {
     if player.is_empty() {
         return;
     }
-    let (entity, mut transform, mut sprite) = player.single_mut();
+    let (entity, mut body) = player.single_mut();
 
     if keyboard_input.pressed(KeyCode::Left) {
-        transform.translation.x -= 1.0;
-        sprite.flip_x = false;
+        body.acceleration.x = -MOVEMENT_SPEED;
     }
     if keyboard_input.pressed(KeyCode::Right) {
-        transform.translation.x += 1.0;
-        sprite.flip_x = true;
+        body.acceleration.x = MOVEMENT_SPEED;
     }
-    if keyboard_input.pressed(KeyCode::Up) {
+
+    if !keyboard_input.pressed(KeyCode::Left) && !keyboard_input.pressed(KeyCode::Right) {
+        body.acceleration.x = 0.0;
+    }
+
+    if keyboard_input.pressed(KeyCode::LAlt) {
         commands.entity(entity).remove::<FootholdId>();
-        transform.translation.y += 1.0;
-    }
-    if keyboard_input.pressed(KeyCode::Down) {
-        transform.translation.y -= 1.0;
+        body.acceleration.y = JUMP_FORCE;
     }
 }
 
@@ -62,17 +63,26 @@ fn player_foothold_collision_system(
     images: Res<Assets<Image>>,
     footholds_container: Res<FootholdContainer>,
     mut player: Query<
-        (Entity, &mut Transform, &Handle<Image>, Option<&FootholdId>),
-        (With<Transform>, With<Sprite>, With<Player>),
+        (
+            Entity,
+            &mut Transform,
+            &mut RigidBody,
+            &Handle<Image>,
+            Option<&FootholdId>,
+        ),
+        (With<Transform>, With<RigidBody>, With<Sprite>, With<Player>),
     >,
     footholds: Query<&Foothold, With<Foothold>>,
 ) {
     if player.is_empty() {
         return;
     }
-    let (entity, mut transform, texture, foothold_id) = player.single_mut();
+    let (entity, mut transform, body, texture, foothold_id) = player.single_mut();
 
-    let position = transform.translation;
+    // Calculate the next position
+    let mut next_transform = transform.clone();
+    next_transform.translation += Vec3::new(body.velocity.x, body.velocity.y, 0.0)
+        + Vec3::new(0.5 * body.acceleration.x, 0.5 * body.acceleration.y, 0.0);
 
     if let Some(image) = images.get(texture) {
         let width = image.texture_descriptor.size.width as f32;
@@ -88,20 +98,24 @@ fn player_foothold_collision_system(
             let curr = foothold_id.unwrap().0;
 
             if let Some(foothold) = footholds_container.data.get(&curr) {
-                if let Some(y) = foothold.get_y_at_x(position.x) {
-                    position_limit_ground_y(&mut (transform.translation), height, y);
-                } else if let Some(y) =
-                    container_get_y_at_x(&footholds_container, foothold.prev, position.x)
-                {
+                if let Some(y) = foothold.get_y_at_x(next_transform.translation.x) {
+                    position_limit_ground_y(&mut (next_transform.translation), height, y);
+                } else if let Some(y) = container_get_y_at_x(
+                    &footholds_container,
+                    foothold.prev,
+                    next_transform.translation.x,
+                ) {
                     println!("fh({}): previous({})", foothold.id, foothold.prev);
                     commands.entity(entity).insert(FootholdId(foothold.prev));
-                    position_limit_ground_y(&mut (transform.translation), height, y);
-                } else if let Some(y) =
-                    container_get_y_at_x(&footholds_container, foothold.next, position.x)
-                {
+                    position_limit_ground_y(&mut (next_transform.translation), height, y);
+                } else if let Some(y) = container_get_y_at_x(
+                    &footholds_container,
+                    foothold.next,
+                    next_transform.translation.x,
+                ) {
                     println!("fh({}): next({})", foothold.id, foothold.next);
                     commands.entity(entity).insert(FootholdId(foothold.next));
-                    position_limit_ground_y(&mut (transform.translation), height, y);
+                    position_limit_ground_y(&mut (next_transform.translation), height, y);
                 } else {
                     println!("fh({}): removed", foothold.id);
                     commands.entity(entity).remove::<FootholdId>();
@@ -115,18 +129,20 @@ fn player_foothold_collision_system(
         // Foothold doesn't exist: check for new collisions
         if use_collision {
             for foothold in footholds.iter() {
-                let collisions = collide_sprite_foothold(&position, width, height, foothold);
+                let collisions =
+                    collide_sprite_foothold(&next_transform.translation, width, height, foothold);
 
                 // Left slope
                 if collisions.contains_key(&CollisionType::Left)
                     && collisions.contains_key(&CollisionType::Bottom)
                     && !collisions.contains_key(&CollisionType::Right)
                 {
-                    if let Some(y) = foothold.get_y_at_x(position.x - half_width) {
-                        if (position.y - half_height - y).abs() < 5.0 {
+                    if let Some(y) = foothold.get_y_at_x(next_transform.translation.x - half_width)
+                    {
+                        if (next_transform.translation.y - half_height - y).abs() < 5.0 {
                             println!("fh({}): added", foothold.id);
                             commands.entity(entity).insert(FootholdId(foothold.id));
-                            // position_limit_ground_y(&mut (transform.translation), height, y);
+                            // position_limit_ground_y(&mut (next_transform.translation), height, y);
                         }
                     }
                 }
@@ -136,11 +152,12 @@ fn player_foothold_collision_system(
                     && collisions.contains_key(&CollisionType::Right)
                     && collisions.contains_key(&CollisionType::Bottom)
                 {
-                    if let Some(y) = foothold.get_y_at_x(position.x + half_width) {
-                        if (position.y - half_height - y).abs() < 5.0 {
+                    if let Some(y) = foothold.get_y_at_x(next_transform.translation.x + half_width)
+                    {
+                        if (next_transform.translation.y - half_height - y).abs() < 5.0 {
                             println!("fh({}): added", foothold.id);
                             commands.entity(entity).insert(FootholdId(foothold.id));
-                            // position_limit_ground_y(&mut (transform.translation), height, y);
+                            // position_limit_ground_y(&mut (next_transform.translation), height, y);
                         }
                     }
                 }
@@ -150,16 +167,18 @@ fn player_foothold_collision_system(
                     && !collisions.contains_key(&CollisionType::Bottom)
                     && collisions.contains_key(&CollisionType::Right)
                 {
-                    if let Some(y) = foothold.get_y_at_x(position.x) {
-                        if (position.y - half_height - y).abs() < 5.0 {
+                    if let Some(y) = foothold.get_y_at_x(next_transform.translation.x) {
+                        if (next_transform.translation.y - half_height - y).abs() < 5.0 {
                             println!("fh({}): added", foothold.id);
                             commands.entity(entity).insert(FootholdId(foothold.id));
-                            // position_limit_ground_y(&mut (transform.translation), height, y);
+                            // position_limit_ground_y(&mut (next_transform.translation), height, y);
                         }
                     }
                 }
             }
         }
+
+        transform.translation = next_transform.translation;
     }
 }
 
