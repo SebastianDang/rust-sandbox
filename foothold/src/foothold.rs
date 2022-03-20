@@ -66,7 +66,7 @@ fn add_new_footholds(
     for foothold in query.iter() {
         // Only insert footholds with ids 1 or greater
         if foothold.id != 0 {
-            println!("foothold({}): inserted", foothold.id);
+            info!("foothold({}): inserted", foothold.id);
             container.data.insert(foothold.id, foothold.clone());
         }
     }

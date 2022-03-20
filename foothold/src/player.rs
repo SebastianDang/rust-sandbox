@@ -1,6 +1,5 @@
 use crate::*;
 use bevy::prelude::*;
-use std::collections::HashMap;
 
 #[derive(Clone, Component, Debug)]
 pub struct Player;
@@ -102,7 +101,7 @@ fn player_foothold_collision_system(
                     foothold.prev,
                     next_transform.translation.x,
                 ) {
-                    println!("fh({}): previous({})", foothold.id, foothold.prev);
+                    info!("fh({}): previous({})", foothold.id, foothold.prev);
                     commands.entity(entity).insert(FootholdId(foothold.prev));
                     position_limit_ground_y(&mut (next_transform.translation), height, y);
                 } else if let Some(y) = container_get_y_at_x(
@@ -110,11 +109,11 @@ fn player_foothold_collision_system(
                     foothold.next,
                     next_transform.translation.x,
                 ) {
-                    println!("fh({}): next({})", foothold.id, foothold.next);
+                    info!("fh({}): next({})", foothold.id, foothold.next);
                     commands.entity(entity).insert(FootholdId(foothold.next));
                     position_limit_ground_y(&mut (next_transform.translation), height, y);
                 } else {
-                    println!("fh({}): removed", foothold.id);
+                    info!("fh({}): removed", foothold.id);
                     commands.entity(entity).remove::<FootholdId>();
                     use_collision = true;
                 }
@@ -169,7 +168,7 @@ fn calculate_fh_collision(
         (foothold.get_y_at_x(current.x), foothold.get_y_at_x(next.x))
     {
         if current.y >= current_fh_y && next.y <= next_fh_y {
-            println!("added fh({})): current", foothold.id);
+            info!("added fh({})): current", foothold.id);
             return Some(Vec2::new(next.x, next_fh_y));
         }
     }
@@ -179,7 +178,7 @@ fn calculate_fh_collision(
         container_get_y_at_x(container, foothold.prev, next.x),
     ) {
         if current.y >= current_fh_y && next.y <= next_fh_y {
-            println!("added fh({}): previous({})", foothold.id, foothold.prev);
+            info!("added fh({}): previous({})", foothold.id, foothold.prev);
             return Some(Vec2::new(next.x, next_fh_y));
         }
     }
@@ -189,7 +188,7 @@ fn calculate_fh_collision(
         container_get_y_at_x(container, foothold.next, next.x),
     ) {
         if current.y >= current_fh_y && next.y <= next_fh_y {
-            println!("added fh({}): next({})", foothold.id, foothold.next);
+            info!("added fh({}): next({})", foothold.id, foothold.next);
             return Some(Vec2::new(next.x, next_fh_y));
         }
     }
