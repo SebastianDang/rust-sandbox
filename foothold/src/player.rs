@@ -90,8 +90,8 @@ fn player_foothold_collision_system(
         let mut use_collision = false;
 
         // Footold exists: check nodes and update
-        if foothold_id.is_some() {
-            let curr = foothold_id.unwrap().0;
+        if let Some(id) = foothold_id {
+            let curr = id.0;
 
             if let Some(foothold) = footholds_container.data.get(&curr) {
                 if let Some(y) = foothold.get_y_at_x(next_transform.translation.x) {
